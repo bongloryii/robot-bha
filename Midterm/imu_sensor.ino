@@ -25,7 +25,7 @@ void setupIMU()
   }    
   bno.setExtCrystalUse(true);
 }
-void readIMU() 
+void readIMU() //loop
 {
   if (readIMU ==1) {
     readIMU=0;

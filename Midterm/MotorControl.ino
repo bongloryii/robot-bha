@@ -32,6 +32,14 @@ void setupMotors(){
   attachInterrupt(digitalPinToInterrupt(enLA), countEnLA, RISING);
   attachInterrupt(digitalPinToInterrupt(enRA), countEnRA, RISING);
 }
+void setSpeed(float vr, float vl){
+  // Control motor speeds
+  if (vr > 0) {rightForward(vr);}
+  else {rightBackward(-vr);}
+  
+  if (vl > 0) {leftForward(vl);}
+  else {leftBackward(-vl);}
+}
 // Motor control functions
 void rightForward(float velocity) {
   int pwm = MPStoPWM(velocity);

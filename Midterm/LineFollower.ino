@@ -69,7 +69,7 @@ void readLineFollowerSensor(){
   readLineFollower = 1;
 }
 
-void FollowLine() 
+void FollowLine() //loop
 {
   if (readLineFollower=1) {
     readLineFollower=0;
@@ -94,11 +94,7 @@ void PID_LineFollower(){
   calculatePIDError_line();
 
   // Control motor speeds
-  if (vr > 0) {rightForward(vr);}
-  else {rightBackward(-vr);}
-  
-  if (vl > 0) {leftForward(vl);}
-  else {leftBackward(-vl);}
+  setSpeed(vr,vl);
   
 }
 void calculatePIDError_line(){
