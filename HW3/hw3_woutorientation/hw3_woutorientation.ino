@@ -1,17 +1,17 @@
+#include "TimerOne.h"
 // Define motor pins and encoders
-int motorRpin1 = 8; // Right motor IN1
-int motorRpin2 = 9; // Right motor IN2
+int motorRpin1 = 10; // Right motor IN3
+int motorRpin2 = 11; // Right motor IN4
 
-int motorLpin1 = 10; // Left motor IN3
-int motorLpin2 = 11; // Left motor IN4
+int motorLpin1 = 8; // Left motor IN1
+int motorLpin2 = 9; // Left motor IN2
 
-int enR = 7;  // Right motor enable pin (PWM)
-int enL = 12; // Left motor enable pin (PWM)
+int enR = 13;  // Right motor enable pin (PWM)
+int enL = 7; // Left motor enable pin (PWM)
 
 // Encoders
 int enLA = 2;  // Left motor encoder A
-int enRA = 21; // Right motor encoder A
-
+int enRA = 3; // Right motor encoder A
 volatile unsigned int counterLA = 0;
 volatile unsigned int counterRA = 0;
 

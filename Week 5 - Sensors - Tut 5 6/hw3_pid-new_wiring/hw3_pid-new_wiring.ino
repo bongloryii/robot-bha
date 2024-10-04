@@ -6,7 +6,7 @@ int motorRpin2 = 11; // Right motor IN4
 int motorLpin1 = 8; // Left motor IN1
 int motorLpin2 = 9; // Left motor IN2
 
-int enR = 12;  // Right motor enable pin (PWM)
+int enR = 13;  // Right motor enable pin (PWM)
 int enL = 7; // Left motor enable pin (PWM)
 
 // Encoders
@@ -28,8 +28,8 @@ float x = 0, y = 0, theta = 0;
 float x_g = 1, y_g = 1, theta_g = 0;
 
 // PID control parameters
-const float kp = 0.8;
-const float ki = 0;
+const float kp = 0.5;
+const float ki = 0.05;
 const float kd = 0.05;
 float error, sumError = 0, previousError = 0;
 
