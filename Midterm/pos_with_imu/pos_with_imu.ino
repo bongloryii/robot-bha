@@ -24,8 +24,8 @@ unsigned long previousMillis = 0;
 const float T = 0.1; // Sampling rate
 
 // Goal and current pose
-float x = 0.5, y = 0, theta = 0;
-float x_g = 1, y_g = 1, theta_g = 0.758;
+float x = 0, y = 0, theta = 0;
+float x_g = 0.5, y_g = 2.8, theta_g = 3.13;
 int isReadIMU = 0;
 
 // PID control parameters
@@ -49,8 +49,8 @@ int isPrint =0;
 void setup() {
   Serial.begin(9600);
   setupIMU();
-  // Timer1.attachInterrupt(isPrint);  
-
+  /* Display the floating point data */
+  
   // Set up motor and encoder pins
   pinMode(motorRpin1, OUTPUT);
   pinMode(motorRpin2, OUTPUT);
@@ -63,9 +63,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(enLA), countEnLA, RISING);
   attachInterrupt(digitalPinToInterrupt(enRA), countEnRA, RISING);
 }
-
 void loop() {
-  readIMU();
+    readIMU_pos();
     if (controlState == 0) {
     // Phase 1: Position control
     positionControl_PID();
@@ -101,8 +100,14 @@ void positionControl_PID() {
     Serial.print("Reach destination");
   }
 }
+kp_rho = 0.02;
+ki_rho = 0.01;
+kd_rho = 0.000;
 
-// Calculate PID error for orientation
+kp_omega = 0.01;
+ki_omega = 0.02;
+kd_omega = 0.001;
+
 void calculatePIDError() {
   float deltaX = x_g - x;
   float deltaY = y_g - y;
@@ -126,10 +131,10 @@ void calculatePIDError() {
 }
 float normalizeAngle(float angle) {
   // Normalize the angle to the range [-π, π]
-  while (angle > M_PI-0.05) {
+  while (angle > M_PI) {
     angle -= 2 * M_PI;
   }
-  while (angle < -M_PI+0.05) {
+  while (angle < -M_PI) {
     angle += 2 * M_PI;
   }
   return angle;
