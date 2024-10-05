@@ -33,9 +33,9 @@ const float kp = 0.1;
 const float ki = 0.0;
 const float kd = 0.05;
 float error, sumError = 0, previousError = 0;
-const float kp_theta = 0.07;
+const float kp_theta = 0.09;
 // const float ki_theta = 0;
-const float kd_theta = 0.01;
+const float kd_theta = 0.03;
 // Control motion variables
 float rho, alpha, v = 0.1, vr, vl;
 float currentError, differenceError;
@@ -168,8 +168,6 @@ void orientationControl_PID() {
   theta = normalizeAngle(theta);
   Serial.print(", Theta: "); Serial.print(theta);
   Serial.print(", orientationError: "); Serial.println(orientationError);
-
-
 }
 // Update the robot's position (x, y, theta)
 void updatePose() {
@@ -181,11 +179,11 @@ void updatePose() {
   theta += (v2 - v1) / WHEEL_DISTANCE * T;
   theta =normalizeAngle(theta);
   // Print current pose for debugging
-  if (isPrint ==1) {
-    isPrint ==0;
+  // if (isPrint ==1) {
+  //   isPrint ==0;
   Serial.print("X: "); Serial.print(x); Serial.print(", Y: "); Serial.print(y);
   Serial.print(", Theta: "); Serial.println(theta);
-  }
+  // }
   // Reset encoder counters
   resetCounters();
 }
