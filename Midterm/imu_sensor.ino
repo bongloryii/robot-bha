@@ -1,3 +1,4 @@
+/*
 //use timer to read imu data every 500ms
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
@@ -15,10 +16,10 @@ void setupIMU()
   Serial.begin(9600);
   Serial.println("Orientation Sensor Test"); Serial.println("");
   
-  /* Initialise the sensor */
+  //Initialise the sensor 
   if(!bno.begin())
   {
-    /* There was a problem detecting the BNO055 ... check your connections */
+    //There was a problem detecting the BNO055 ... check your connections 
 
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     while(1);
@@ -31,7 +32,7 @@ void readIMU() //loop
     readIMU=0;
   sensors_event_t event;
   bno.getEvent(&event);
-  /* Display the floating point data */
+  // Display the floating point data 
   Serial.print("X: ");
   Serial.print(event.orientation.x, 4);
   Serial.print("\tY: ");
@@ -45,3 +46,4 @@ void readIMU() //loop
 void isReadIMUdata(){ 
   readIMU = 1;
 }
+*/

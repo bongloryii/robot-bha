@@ -16,7 +16,7 @@ void setup()
   //Set up line follower sensor
   setupLineFollower();
   setupMotors();
-  setupIMU();
+  // setupIMU();
 }
 
 void loop() 
