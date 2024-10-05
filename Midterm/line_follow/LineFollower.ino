@@ -12,8 +12,8 @@ float x_g = 2, y_g = 3, theta_g = 0;
 
 // PID control parameters
 const float kp_line = 0.05;
-const float ki_line = 0;
-const float kd_line = 0;
+const float ki_line = 0.005;
+const float kd_line = 0.002;
 float error, sumError = 0, previousError = 0;
 
 // Control motion variables
@@ -57,17 +57,33 @@ void setupLineFollower()
 void readLineFollowerSensor(){ 
   readLineFollower = 1;
 }
-
+unsigned long stopTestDuration = 0;
+unsigned long currentMillis = 0;
+unsigned long previousMillis;
 void FollowLine() //loop
 {
   if (readLineFollower=1) {
     readLineFollower=0;
     getLineState();
+    previousMillis = millis();
+    while ((lineL1 ==1) & (lineL2==1) & (lineR1 ==1) & (lineR2==1) & (line0 ==1)){
+        currentMillis = millis();
+        stopTestDuration = currentMillis - previousMillis;
+        if (stopTestDuration > 200) {
+          stop();
+          while(1);
+        }
+          }
+      //back to destination
+    }
     Serial.print(lineL1);  Serial.print(lineL2);  Serial.print(line0);  Serial.print(lineR1);  Serial.println(lineR2);
     Serial.print(vr); Serial.print(";"); Serial.println(vl);
       }
-    PID_LineFollower();
-
+  // Update error for PID
+    calculatePIDError_line();
+    
+    // Control motor speeds
+    setSpeed(vr,vl);
     // calculatePIDError_line();
 }
 
@@ -78,24 +94,19 @@ void getLineState() {
   lineR1 = digitalRead(OUT4);
   lineR2 = digitalRead(OUT5);
 }
-void PID_LineFollower(){
-  // Update error for PID
-  calculatePIDError_line();
-
-  // Control motor speeds
-  setSpeed(vr,vl);
-  
-}
 void calculatePIDError_line(){
   previousError = currentError;
-  currentError = -alpha * lineL2 - beta * lineL1 + beta * lineR1 + alpha * lineR2;
+  currentError = - alpha * lineL2 - beta * lineL1 + beta * lineR1 + alpha * lineR2 + gamma * (1-line0);
+  
+  // currentError = alpha * (1-lineL2) + beta * (1-lineL1) - beta * (1-lineR1) - alpha * (1-lineR2) + (gamma) * (1-line0);
   Serial.print("Current error:");Serial.println(currentError);
-  if (line0 != 1) {
-    currentError += (gamma) * (line0 + 1);
-  }
+  
+    
+  sumError+=currentError;
   differenceError = currentError - previousError;
-  sumError += currentError;
+  Serial.print("Sum error");Serial.println(sumError);
 
+  Serial.print("Difference error");Serial.println(differenceError);
   // Calculate PID control output (error) for velocity difference between wheels
   error = kp * currentError + ki * sumError + kd * differenceError;
   
