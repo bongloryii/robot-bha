@@ -10,7 +10,7 @@ void setupIMU()
 {
   Timer1.initialize(1000000);    //500ms     
   Timer1.attachInterrupt(isReadIMUdata);  
-  
+
   Serial.begin(9600);
   Serial.println("Orientation Sensor Test"); Serial.println("");
   
@@ -24,7 +24,9 @@ void setupIMU()
   }    
   bno.setExtCrystalUse(true);
 }
-void readIMU() //loop
+
+
+void readIMU_pos() //loop
 {
   if (isReadIMU ==1) {
     isReadIMU=0;
@@ -32,16 +34,19 @@ void readIMU() //loop
   bno.getEvent(&event);
   /* Display the floating point data */
   Serial.print("X: ");
-  Serial.print(event.orientation.x, 4);
+  x_imu = event.orientation.x;
+  y_imu = event.orientation.y;
+  z_imu = event.orientation.z;
+  Serial.print(x_imu, 4);
   Serial.print("\tY: ");
-  Serial.print(event.orientation.y, 4);
+  Serial.print(y_imu, 4);
   Serial.print("\tZ: ");
-  Serial.print(event.orientation.z, 4);
+  Serial.print(z_imu, 4);
   Serial.println("");
   }
   
 }
 void isReadIMUdata(){ 
   isReadIMU = 1;
-  isPrint=1;
+  // isPrint=1;
 }
