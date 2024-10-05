@@ -1,3 +1,4 @@
+/*
 #include "TimerOne.h"
 // Define motor pins and encoders
 int motorRpin1 = 10; // Right motor IN3
@@ -49,7 +50,7 @@ int isPrint =0;
 void setup() {
   Serial.begin(9600);
   // setupIMU();
-  /* Display the floating point data */
+  // Display the floating point data 
   
   // Set up motor and encoder pins
   pinMode(motorRpin1, OUTPUT);
@@ -138,7 +139,7 @@ void orientationControl_PID() {
   float orientationError = theta_g - theta;
 
   // If the orientation error is small, stop the robot
-  if (abs(orientationError) < 0.05) {
+  if (abs(orientationError) < 0.2) {
     stop();
     Serial.println("Goal reached with correct orientation!");
     delay(3000);
@@ -250,3 +251,4 @@ void resetCounters() {
   counterLA = 0;
   counterRA = 0;
 }
+*/
