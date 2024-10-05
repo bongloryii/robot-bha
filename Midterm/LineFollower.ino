@@ -22,9 +22,9 @@ float x = 0, y = 0, theta = 0;
 float x_g = 2, y_g = 3, theta_g = 0;
 
 // PID control parameters
-const float kp = 0.05;
-const float ki = 0;
-const float kd = 0;
+const float kp_line = 0.05;
+const float ki_line = 0;
+const float kd_line = 0;
 float error, sumError = 0, previousError = 0;
 
 // Control motion variables
