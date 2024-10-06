@@ -305,19 +305,24 @@ void leftBackward(float velocity) {
   analogWrite(enL, pwm);
 }
 
-
 void turnLeft() {
-  readIMU_pos();
+  if (isReadIMU ==1) {
+    isReadIMU=0;
   sensors_event_t event;
   bno.getEvent(&event);
   start = event.orientation.x;
-  target = start + 85;
+  }
+  if(start >= 270){
+    start -= 360;
+  }
+  target = start + 75;
   digitalWrite(motorRpin1, HIGH);
   digitalWrite(motorRpin2, LOW);
   analogWrite(enR, 150);
   while(start < target)
     {
-      readIMU_pos();
+      sensors_event_t event;
+      bno.getEvent(&event);
       start = event.orientation.x;
       Serial.println(start);
       Serial.println(theta);
@@ -326,17 +331,23 @@ void turnLeft() {
 }
 
 void turnRight() {
-  readIMU_pos();
+  if (isReadIMU ==1) {
+    isReadIMU=0;
   sensors_event_t event;
   bno.getEvent(&event);
   start = event.orientation.x;
-  target = start + 85;
+  }
+  if(start >= 270){
+    start -= 360;
+  }
+  target = start + 75;
   digitalWrite(motorLpin1, HIGH);
   digitalWrite(motorLpin2, LOW);
   analogWrite(enL, 150);
   while(start < target)
-    {
-      readIMU_pos();
+    { 
+      sensors_event_t event;
+      bno.getEvent(&event);
       start = event.orientation.x;
       Serial.println(start);
       Serial.println(theta);
