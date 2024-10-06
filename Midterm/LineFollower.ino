@@ -34,11 +34,11 @@ float currentError, differenceError;
 int readLineFollower;
 
 // line following sensor pin
-#define OUT1 45
-#define OUT2 47
-#define OUT3 49
-#define OUT4 51
-#define OUT5 53
+#define OUT1 41
+#define OUT2 43
+#define OUT3 45
+#define OUT4 47
+#define OUT5 49
 
 // line follower variables
 int lineL1;

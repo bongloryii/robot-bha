@@ -28,12 +28,12 @@ int enLA = 2;  // Left motor encoder A
 int enRA = 3; // Right motor encoder A
 
 // Ultrasonic
-int echoPin1 = 7; // Front ultrasonic
-int trigPin1 = 6;
-int echoPin2 = 11; // Left ultrasonic
-int trigPin2 = 10;
-int echoPin3 = 9; // Right ultrasonic
-int trigPin3 = 8;
+int trigPin1 = 50; // Front ultrasonic
+int echoPin1 = 51;
+int trigPin2 = 36; // Left ultrasonic
+int echoPin2 = 37;
+int trigPin3 = 52; // Right ultrasonic
+int echoPin3 = 53;
 
 volatile unsigned int counterLA = 0;
 volatile unsigned int counterRA = 0;
@@ -66,11 +66,11 @@ float currentError, differenceError;
 int readLineFollower;
 
 // line following sensor pin
-#define OUT1 45
-#define OUT2 47
-#define OUT3 49
-#define OUT4 51
-#define OUT5 53
+#define OUT1 41
+#define OUT2 43
+#define OUT3 45
+#define OUT4 47
+#define OUT5 49
 
 // line follower variables
 int lineL1;
