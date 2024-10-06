@@ -13,6 +13,15 @@
 // 0 0 0 0 0        0 Robot found no line: turn 180o
 
 #include "TimerOne.h"
+//use timer to read imu data every 500ms
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
+#include "TimerOne.h"
+
+extern Adafruit_BNO055 bno;
+
 // Define motor pins and encoders
 int motorRpin1 = 10; // Right motor IN3
 int motorRpin2 = 11; // Right motor IN4//few 
@@ -27,19 +36,19 @@ int enL = 7; // Left motor enable pin (PWM)
 int enLA = 2;  // Left motor encoder A
 int enRA = 3; // Right motor encoder A
 
-// Ultrasonic
-int echoPin1 = 7; // Front ultrasonic
-int trigPin1 = 6;
-int echoPin2 = 11; // Left ultrasonic
-int trigPin2 = 10;
-int echoPin3 = 9; // Right ultrasonic
-int trigPin3 = 8;
-
 volatile unsigned int counterLA = 0;
 volatile unsigned int counterRA = 0;
 
+// Ultrasonic
+int echoPin1 = 51; // Front ultrasonic
+int trigPin1 = 50;
+int echoPin2 = 37; // Left ultrasonic
+int trigPin2 = 36;
+// int echoPin3 = 53; // Right ultrasonic
+// int trigPin3 = 52;
+
 // volatile float maxFront = 15;
-volatile float duration1, distance1, duration2, distance2, duration3, distance3;
+volatile float duration1, distance1, duration2, distance2;
 volatile float maxDistance = 15;
 
 const float WHEEL_DISTANCE = 0.182; // Distance between two wheels
@@ -51,26 +60,23 @@ const float T = 0.1; // Sampling rate
 
 // Goal and current pose
 float x = 0, y = 0, theta = 0;
-float x_g = 2, y_g = 3, theta_g = 0;
+float x_g = 1, y_g = 1, theta_g = 3.13;
+int isReadIMU = 0;
 
 // PID control parameters
 const float kp = 0.05;
 const float ki = 0;
 const float kd = 0;
 float error, sumError = 0, previousError = 0;
-
-// Control motion variables
-float v = 0.2, vr, vl;
+float v = 0.15, vr, vl;
 float currentError, differenceError; 
 
-int readLineFollower;
-
 // line following sensor pin
-#define OUT1 45
-#define OUT2 47
-#define OUT3 49
-#define OUT4 51
-#define OUT5 53
+#define OUT1 41
+#define OUT2 43
+#define OUT3 45
+#define OUT4 47
+#define OUT5 49
 
 // line follower variables
 int lineL1;
@@ -83,10 +89,17 @@ const float alpha = 0.5; //line follower -- weight of outer eyes
 const float beta = 0.5; //line follower -- weight of inner eyes
 const float gamma = 0.1; //line follower -- weight of the middle eye
 
+int readLineFollower;
+int start = 0;
+int target = 0;
+
 void setup() 
 {
   Timer1.initialize(500000);    //500ms     
   Timer1.attachInterrupt(readLineFollowerSensor);  
+
+  setupIMU();
+  ultraSetup();
   
   Serial.begin(9600);
   //Set up line follower sensor
@@ -108,13 +121,16 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(enLA), countEnLA, RISING);
   attachInterrupt(digitalPinToInterrupt(enRA), countEnRA, RISING);
 
-  // Set up 3 ultrasonic sensors
+}
+
+void ultraSetup() {
+   // Set up 3 ultrasonic sensors
   pinMode(trigPin1, OUTPUT);
   pinMode(echoPin1, INPUT);
   pinMode(trigPin2, OUTPUT);
   pinMode(echoPin2, INPUT);
-  pinMode(trigPin3, OUTPUT);
-  pinMode(echoPin3, INPUT);
+  // pinMode(trigPin3, OUTPUT);
+  // pinMode(echoPin3, INPUT);
 }
 
 void readLineFollowerSensor(){ 
@@ -123,17 +139,19 @@ void readLineFollowerSensor(){
 
 void loop() 
 {
-  if (readLineFollower =1) {
+  if (readLineFollower == 1) {
     readLineFollower=0;
     getLineState();
     PID_LineFollower();
-    ObstacleAvoid();
+    obstacleAvoid();
   }
-
   
 }
 
 void checkFrontDistance() {
+  
+  digitalWrite(trigPin2, LOW);
+  digitalWrite(echoPin2, LOW);
 
   digitalWrite(trigPin1, LOW);
   delayMicroseconds(5);
@@ -141,12 +159,16 @@ void checkFrontDistance() {
   delayMicroseconds(10);
   digitalWrite(trigPin1, LOW);
   duration1 = pulseIn(echoPin1, HIGH);
+  Serial.println(duration1);
   distance1 = duration1 * 0.037 / 2;
   delay(60); 
 }
 
 void checkLeftDistance() {
   
+  digitalWrite(trigPin1, LOW);
+  digitalWrite(echoPin1, LOW);
+
   digitalWrite(trigPin2, LOW);
   delayMicroseconds(5);
   digitalWrite(trigPin2, HIGH);
@@ -154,64 +176,63 @@ void checkLeftDistance() {
   digitalWrite(trigPin2, LOW);
   duration2 = pulseIn(echoPin2, HIGH);
   distance2 = duration2 * 0.037 / 2;
+  delay(60);
 }
 
-void checkRightDistance() {
+// void checkRightDistance() {
   
-  digitalWrite(trigPin3, LOW);
-  delayMicroseconds(5);
-  digitalWrite(trigPin3, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin3, LOW);
-  duration3 = pulseIn(echoPin3, HIGH);
-  distance3 = duration3 * 0.037 / 2;
-}
+//   digitalWrite(trigPin3, LOW);
+//   delayMicroseconds(5);
+//   digitalWrite(trigPin3, HIGH);
+//   delayMicroseconds(10);
+//   digitalWrite(trigPin3, LOW);
+//   duration3 = pulseIn(echoPin3, HIGH);
+//   distance3 = duration3 * 0.037 / 2;
+//   delay(60);
+// }
 
-void ObstacleAvoid() {
+bool isObstacleInFront = false;
 
+void obstacleAvoid() {
   // front distance check
   checkFrontDistance();
-  if (distance1 < maxDistance) {
+    // Serial.print("Distance 1 2 3:");
+    // checkFrontDistance();
+    // // checkLeftDistance();
+    // // checkRightDistance();
+    // Serial.println(distance1);
+    // Serial.println(distance2);
+    // Serial.println(distance3);
+  if (distance1 < maxDistance){
+    turnRight(); // xe xoay 90 do sang phai
+    
+    isObstacleInFront = true;
+    // Serial.print("distance1 < maxDistance");
+    //     Serial.println(distance2);
     checkLeftDistance();
-    delay(60);
-    checkRightDistance();
-    delay(60);
-    if (distance2 < distance3)
-      turnRight();
-    else if (distance2 > distance3) {
-      turnLeft();
+    if (distance2 < maxDistance) {
+        rightForward(v);
+        leftForward(v);
+        delay(1000);   
+        } 
     }
-  }
-  else {
-    rightForward(vr);
-    leftForward(vl);
-  }
 
-  // left distance check
-  checkLeftDistance();
-  if (distance2 < maxDistance)
-    checkRightDistance();
-    delay(60);
-    if (distance2 > distance3)
-      rightForward(vr); 
-      leftForward(vl);
-    else if (distance2 < distance3) {
-      turnRight();
+    if(lineL1 == true || lineL2 == true || line0 == true || lineR1 == true || lineR2 == true){
+      Serial.println(line0);
+      isObstacleInFront = false;
     }
-  
 
-  // right distance check
-  checkRightDistance();
-  if (distance3 < maxDistance) 
-    checkLeftDistance();
-    delay(60);
-    if (distance3 > distance2)
-      rightForward(vr);
-      leftForward(vl);
-    else if (distance3 < distance2) {
-      turnLeft();
+    if (isObstacleInFront == true) {
+      // Serial.print("isObstacleInFront");
+      // Serial.println(isObstacleInFront);
+      checkLeftDistance();
+      if (distance2 > maxDistance) {
+        turnLeft();
+        rightForward(v);
+        leftForward(v);
+        delay(1000); 
+      }
     }
-  
 }
 
 void getLineState() {
@@ -284,12 +305,43 @@ void leftBackward(float velocity) {
   analogWrite(enL, pwm);
 }
 
-void turnLeft(float velocity) {
 
+void turnLeft() {
+  readIMU_pos();
+  sensors_event_t event;
+  bno.getEvent(&event);
+  start = event.orientation.x;
+  target = start + 85;
+  digitalWrite(motorRpin1, HIGH);
+  digitalWrite(motorRpin2, LOW);
+  analogWrite(enR, 150);
+  while(start < target)
+    {
+      readIMU_pos();
+      start = event.orientation.x;
+      Serial.println(start);
+      Serial.println(theta);
+    }
+    stop();
 }
 
-void turnRight(float velocity) {
-
+void turnRight() {
+  readIMU_pos();
+  sensors_event_t event;
+  bno.getEvent(&event);
+  start = event.orientation.x;
+  target = start + 85;
+  digitalWrite(motorLpin1, HIGH);
+  digitalWrite(motorLpin2, LOW);
+  analogWrite(enL, 150);
+  while(start < target)
+    {
+      readIMU_pos();
+      start = event.orientation.x;
+      Serial.println(start);
+      Serial.println(theta);
+    }
+    stop();
 }
 
 // Stop motors
