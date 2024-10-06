@@ -1,4 +1,4 @@
-// #include "TimerOne.h"
+#include "TimerOne.h"
 // Define motor pins and encoders
 int motorRpin1 = 10; // Right motor IN3
 int motorRpin2 = 11; // Right motor IN4
@@ -17,26 +17,27 @@ volatile unsigned int counterLA = 0;
 volatile unsigned int counterRA = 0;
 
 const float WHEEL_DISTANCE = 0.182; // Distance between two wheels
-const int PULSE_PER_REV = 940;
+const int PULSE_PER_REV = 1000;
 const float WHEEL_PERIMETER = 0.1413; // Circumference of the wheel
 
 unsigned long previousMillis = 0;
 const float T = 0.1; // Sampling rate
 
 // Goal and current pose
-float x = 0.5, y = 0, theta = 0;
-float x_g = 1, y_g = 1, theta_g = 0.758;
+float x = 0, y = 0, theta = 0;
+float x_g = 1, y_g = 1, theta_g = 3.13;
+int isReadIMU = 0;
 
 // PID control parameters
-const float kp = 0.1;
+const float kp = 0.05;
 const float ki = 0.0;
-const float kd = 0.05;
+const float kd = 0.0;
 float error, sumError = 0, previousError = 0;
-const float kp_theta = 0.07;
+const float kp_theta = 0.03;
 // const float ki_theta = 0;
-const float kd_theta = 0.01;
+const float kd_theta = 0.0;
 // Control motion variables
-float rho, alpha, v = 0.1, vr, vl;
+float rho, alpha, v = 0.15, vr, vl;
 float currentError, differenceError;
 
 // Control state: 0 = moving to position, 1 = adjusting orientation
@@ -44,9 +45,11 @@ int controlState = 0;
 
 float v1 ; // Left wheel velocity in m/s
 float v2 ; // Right wheel velocity in m/s
-  
+int isPrint =0;
 void setup() {
   Serial.begin(9600);
+  setupIMU();
+  //Display the floating point data 
   
   // Set up motor and encoder pins
   pinMode(motorRpin1, OUTPUT);
@@ -60,23 +63,21 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(enLA), countEnLA, RISING);
   attachInterrupt(digitalPinToInterrupt(enRA), countEnRA, RISING);
 }
-
 void loop() {
+    
+  
     if (controlState == 0) {
-    // Phase 1: Position control
+    readIMU_pos();// Phase 1: Position control
     positionControl_PID();
   } else if (controlState == 1) {
     // Phase 2: Orientation control
+    readIMU_pos();
     orientationControl_PID();
   }
 }
 
 void positionControl_PID() {
-  unsigned long currentMillis = millis();
-  
-  // Update error for PID
-  calculatePIDError();
-
+  unsigned long currentMillis = millis();  
   // Control motor speeds
   if (vr > 0) rightForward(vr);
   else rightBackward(-vr);
@@ -88,16 +89,19 @@ void positionControl_PID() {
   if (currentMillis - previousMillis >= T * 1000) {
     previousMillis = currentMillis;
     updatePose();
+    // Update error for PID
+    calculatePIDError();
   }
 
   // Stop when goal is reached
   if (rho < 0.05) {
-    stop();
+    // stop();
     controlState =1; // Hold position at goal
     Serial.print("Reach destination");
   }
 }
-
+float faster;
+float previousRho;
 // Calculate PID error for orientation
 void calculatePIDError() {
   float deltaX = x_g - x;
@@ -105,65 +109,79 @@ void calculatePIDError() {
   
   // Calculate distance to goal (rho) and heading angle (alpha)
   rho = sqrt(deltaX * deltaX + deltaY * deltaY);
+  faster = 0.01 * rho+0.05*(rho-previousRho);
+  previousRho = rho;
   float theta_p = atan2(deltaY, deltaX);
-  
+  // Serial.print("Theta_p: "); Serial.println(theta_p);
   previousError = currentError;
   currentError = theta_p - theta;
   
   differenceError = currentError - previousError;
+  Serial.print("differenceError: ");Serial.println(differenceError);
   sumError += currentError;
 
   // Calculate PID control output (error) for velocity difference between wheels
   error = kp * currentError + ki * sumError + kd * differenceError;
   
   // Adjust wheel velocities
-  vr = v + error;
-  vl = v - error;
+  vr = v+faster + error;
+  vl = v+faster - error;
 }
 float normalizeAngle(float angle) {
   // Normalize the angle to the range [-π, π]
-  while (angle > M_PI-0.05) {
+  while (angle > M_PI) {
     angle -= 2 * M_PI;
   }
-  while (angle < -M_PI+0.05) {
+  while (angle < -M_PI) {
     angle += 2 * M_PI;
   }
-  return angle;
+  return round(angle * 100) / 100.0;
 }
+float x_imu;
+float y_imu;
+float z_imu;
 void orientationControl_PID() {
-  // Calculate the orientation error
-  float orientationError = theta_g - theta;
+  unsigned long currentMillis = millis();  
+  // Control motor speeds
+  if (vr > 0) rightForward(vr);
+  else rightBackward(-vr);
+  
+  if (vl > 0) leftForward(vl);
+  else leftBackward(-vl);
 
-  // If the orientation error is small, stop the robot
-  if (abs(orientationError) < 0.05) {
-    stop();
-    Serial.println("Goal reached with correct orientation!");
-    delay(3000);
-    while(1);
-  } else {
+  // Update RPM and pose periodically
+  if (currentMillis - previousMillis >= T * 1000) {
+    previousMillis = currentMillis;
+    theta = normalizeAngle(-x_imu/360*2*3.14);
+     // Update error for PID
+    //calculatePIDError();
+    float orientationError = theta_g - theta;
+
     // Control motors to rotate and adjust orientation
     float correction = kp_theta * orientationError + kd_theta * (orientationError - previousError);
     previousError = orientationError;
-
     // Adjust wheel velocities for rotation
     vr = correction;
-    vl = -correction;
+    vl = -correction*0.95;
 
     if (vr > 0) rightForward(vr);
     else rightBackward(-vr);
     
     if (vl > 0) leftForward(vl);
     else leftBackward(-vl);
-    // Update RPM and pose periodically
     Serial.print("correction: "); Serial.print(correction);
+    
+    Serial.print(", Theta: "); Serial.print(theta);
 
+    Serial.print(", orientationError: "); Serial.println(orientationError);
   }
-  theta += (v2 - v1) / WHEEL_DISTANCE*T;
-  theta = normalizeAngle(theta);
-  Serial.print(", Theta: "); Serial.print(theta);
-  Serial.print(", orientationError: "); Serial.println(orientationError);
-
-
+  // If the orientation error is small, stop the robot
+  if (abs(orientationError) < 0.2) {
+    stop();
+    Serial.println("Goal reached with correct orientation!");
+    delay(3000);
+    while(1);
+  } 
 }
 // Update the robot's position (x, y, theta)
 void updatePose() {
@@ -172,12 +190,15 @@ void updatePose() {
   
   x += (v1 + v2) / 2 * cos(theta) * T;
   y += (v1 + v2) / 2 * sin(theta) * T;
-  theta += (v2 - v1) / WHEEL_DISTANCE * T;
-  theta =normalizeAngle(theta);
+  // theta += (v2 - v1) / WHEEL_DISTANCE * T;
+  // theta =normalizeAngle(theta);
+  theta = normalizeAngle(-x_imu/360*2*3.14);
   // Print current pose for debugging
+  // if (isPrint ==1) {
+  //   isPrint ==0;
   Serial.print("X: "); Serial.print(x); Serial.print(", Y: "); Serial.print(y);
   Serial.print(", Theta: "); Serial.println(theta);
-
+  // }
   // Reset encoder counters
   resetCounters();
 }

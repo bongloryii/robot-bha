@@ -1,22 +1,22 @@
-/*
+
 //use timer to read imu data every 500ms
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 #include "TimerOne.h"
-int readIMU = 0;
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x29, &Wire);
+
 
 void setupIMU() 
 {
-  Timer1.initialize(500000);    //500ms     
+  Timer1.initialize(200000);    //500ms     
   Timer1.attachInterrupt(isReadIMUdata);  
-  
+
   Serial.begin(9600);
   Serial.println("Orientation Sensor Test"); Serial.println("");
   
-  //Initialise the sensor 
+  // Initialise the sensor 
   if(!bno.begin())
   {
     //There was a problem detecting the BNO055 ... check your connections 
@@ -25,25 +25,30 @@ void setupIMU()
     while(1);
   }    
   bno.setExtCrystalUse(true);
+  // delay(1000);
 }
-void readIMU() //loop
+
+void readIMU_pos() //loop
 {
-  if (readIMU ==1) {
-    readIMU=0;
+  if (isReadIMU ==1) {
+    isReadIMU=0;
   sensors_event_t event;
   bno.getEvent(&event);
   // Display the floating point data 
   Serial.print("X: ");
-  Serial.print(event.orientation.x, 4);
-  Serial.print("\tY: ");
-  Serial.print(event.orientation.y, 4);
-  Serial.print("\tZ: ");
-  Serial.print(event.orientation.z, 4);
-  Serial.println("");
+  x_imu = event.orientation.x;
+  y_imu = event.orientation.y;
+  z_imu = event.orientation.z;
+  // Serial.print(x_imu, 4);
+  // Serial.print("\tY: ");
+  // Serial.print(y_imu, 4);
+  // Serial.print("\tZ: ");
+  // Serial.print(z_imu, 4);
+  // Serial.println("");
   }
   
 }
 void isReadIMUdata(){ 
-  readIMU = 1;
+  isReadIMU = 1;
+  // isPrint=1;
 }
-*/

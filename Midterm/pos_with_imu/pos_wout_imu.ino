@@ -1,4 +1,5 @@
-// #include "TimerOne.h"
+/*
+#include "TimerOne.h"
 // Define motor pins and encoders
 int motorRpin1 = 10; // Right motor IN3
 int motorRpin2 = 11; // Right motor IN4
@@ -24,17 +25,18 @@ unsigned long previousMillis = 0;
 const float T = 0.1; // Sampling rate
 
 // Goal and current pose
-float x = 0.5, y = 0, theta = 0;
-float x_g = 1, y_g = 1, theta_g = 0.758;
+float x = 0, y = 0, theta = 0;
+float x_g = 0.5, y_g = 2.8, theta_g = 3.13;
+int isReadIMU = 0;
 
 // PID control parameters
 const float kp = 0.1;
 const float ki = 0.0;
 const float kd = 0.05;
 float error, sumError = 0, previousError = 0;
-const float kp_theta = 0.07;
+const float kp_theta = 0.09;
 // const float ki_theta = 0;
-const float kd_theta = 0.01;
+const float kd_theta = 0.03;
 // Control motion variables
 float rho, alpha, v = 0.1, vr, vl;
 float currentError, differenceError;
@@ -44,9 +46,11 @@ int controlState = 0;
 
 float v1 ; // Left wheel velocity in m/s
 float v2 ; // Right wheel velocity in m/s
-  
+int isPrint =0;
 void setup() {
   Serial.begin(9600);
+  // setupIMU();
+  // Display the floating point data 
   
   // Set up motor and encoder pins
   pinMode(motorRpin1, OUTPUT);
@@ -60,8 +64,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(enLA), countEnLA, RISING);
   attachInterrupt(digitalPinToInterrupt(enRA), countEnRA, RISING);
 }
-
 void loop() {
+  // readIMU_pos();
     if (controlState == 0) {
     // Phase 1: Position control
     positionControl_PID();
@@ -135,7 +139,7 @@ void orientationControl_PID() {
   float orientationError = theta_g - theta;
 
   // If the orientation error is small, stop the robot
-  if (abs(orientationError) < 0.05) {
+  if (abs(orientationError) < 0.2) {
     stop();
     Serial.println("Goal reached with correct orientation!");
     delay(3000);
@@ -158,12 +162,13 @@ void orientationControl_PID() {
     Serial.print("correction: "); Serial.print(correction);
 
   }
+  v1 = RPMtoMPS(calculateRPM(counterLA)); // Left wheel velocity in m/s
+  v2 = RPMtoMPS(calculateRPM(counterRA)); // Right wheel velocity in m/s
+  
   theta += (v2 - v1) / WHEEL_DISTANCE*T;
   theta = normalizeAngle(theta);
   Serial.print(", Theta: "); Serial.print(theta);
   Serial.print(", orientationError: "); Serial.println(orientationError);
-
-
 }
 // Update the robot's position (x, y, theta)
 void updatePose() {
@@ -175,9 +180,11 @@ void updatePose() {
   theta += (v2 - v1) / WHEEL_DISTANCE * T;
   theta =normalizeAngle(theta);
   // Print current pose for debugging
+  // if (isPrint ==1) {
+  //   isPrint ==0;
   Serial.print("X: "); Serial.print(x); Serial.print(", Y: "); Serial.print(y);
   Serial.print(", Theta: "); Serial.println(theta);
-
+  // }
   // Reset encoder counters
   resetCounters();
 }
@@ -244,3 +251,4 @@ void resetCounters() {
   counterLA = 0;
   counterRA = 0;
 }
+*/

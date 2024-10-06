@@ -1,18 +1,19 @@
 //the front of the robot is the L298N, the back is the battery case
-int motor1pin1 = 8; //right motor IN1
-int motor1pin2 = 9; //right motor IN2
+int motorRpin1 = 10; // Right motor IN3
+int motorRpin2 = 11; // Right motor IN4
 
-int motor2pin1 = 10; //left motor IN3
-int motor2pin2 = 11; //left motor IN4
+int motorLpin1 = 8; // Left motor IN1
+int motorLpin2 = 9; // Left motor IN2
 
-int enLA = 2; //left motor C1
-int enLB = 3; //left motor C2
+int enR = 13;  // Right motor enable pin (PWM)
+int enL = 7; // Left motor enable pin (PWM)
 
-int enRB = 20; //right motor C2
-int enRA = 21; //right motor C1
+// Encoders
+int enLA = 2;  // Left motor encoder A
+int enRA = 3; // Right motor encoder A
 
-volatile int counterLA = 0; 
-volatile int counterRA = 0; 
+volatile unsigned int counterLA = 0;
+volatile unsigned int counterRA = 0;
 
 volatile float rpmLA = 0; 
 volatile float rpmRA = 0; 
@@ -33,10 +34,10 @@ void setup() {
   // attachInterrupt(digitalPinToInterrupt(enRA), rightEnISRA, RISING);
   // attachInterrupt(digitalPinToInterrupt(enRB), rightEnISRB, RISING);
 
-  pinMode(motor1pin1, OUTPUT);
-  pinMode(motor1pin2, OUTPUT);
-  pinMode(motor2pin1, OUTPUT);
-  pinMode(motor2pin2, OUTPUT);
+  pinMode(motorRpin1, OUTPUT);
+  pinMode(motorRpin2, OUTPUT);
+  pinMode(motorLpin1, OUTPUT);
+  pinMode(motorLpin2, OUTPUT);
 }
 
 void loop() {
@@ -48,7 +49,7 @@ void loop() {
     Serial.print("RPM_L = "); Serial.print(rpmLA);
     rpmRA = calculateRPM(counterRA);
     Serial.print("; RPM_R = "); Serial.println(rpmRA);
-    resetEncoder();
+    // resetEncoder();
   }
   goForward();
   Serial.print("counterLA: "); Serial.print(counterLA); Serial.print("; counterRA: "); Serial.println(counterRA);
@@ -60,24 +61,24 @@ void goForward(float length) {
   int maxPulse = round(7000*length);
   while ((counterLA <= maxPulse) & (counterRA <= maxPulse)) {
       // Serial.print("counterLA: "); Serial.print(counterLA); Serial.print("; counterRA: "); Serial.println(counterRA);
-      digitalWrite(motor2pin1, LOW);
-      analogWrite(motor2pin2, 255);
-      digitalWrite(motor1pin1, LOW);
-      analogWrite(motor1pin2, 245);
+      digitalWrite(motorLpin1, LOW);
+      analogWrite(motorLpin2, 255);
+      digitalWrite(motorRpin1, LOW);
+      analogWrite(motorRpin2, 245);
     }
   stop();
 }
 void goForward() {
-      digitalWrite(motor2pin1, LOW);
-      analogWrite(motor2pin2, 255);
-      digitalWrite(motor1pin1, LOW);
-      analogWrite(motor1pin2, 100);
+      digitalWrite(motorLpin1, LOW);
+      analogWrite(motorLpin2, 255);
+      digitalWrite(motorRpin1, LOW);
+      analogWrite(motorRpin2, 100);
 }
 void stop() {
-  digitalWrite(motor2pin1, LOW);
-  digitalWrite(motor2pin2, LOW);
-  digitalWrite(motor1pin1, LOW);
-  digitalWrite(motor1pin2, LOW);
+  digitalWrite(motorLpin1, LOW);
+  digitalWrite(motorLpin2, LOW);
+  digitalWrite(motorRpin1, LOW);
+  digitalWrite(motorRpin2, LOW);
 }
 
 void countEnLA() {
