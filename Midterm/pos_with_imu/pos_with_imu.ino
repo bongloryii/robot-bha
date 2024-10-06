@@ -17,7 +17,7 @@ volatile unsigned int counterLA = 0;
 volatile unsigned int counterRA = 0;
 
 const float WHEEL_DISTANCE = 0.182; // Distance between two wheels
-const int PULSE_PER_REV = 1000;
+const int PULSE_PER_REV = 940;
 const float WHEEL_PERIMETER = 0.1413; // Circumference of the wheel
 
 unsigned long previousMillis = 0;
@@ -29,9 +29,9 @@ float x_g = 1, y_g = 1, theta_g = 3.13;
 int isReadIMU = 0;
 
 // PID control parameters
-const float kp = 0.05;
+const float kp = 0.1;
 const float ki = 0.0;
-const float kd = 0.0;
+const float kd = 0.05;
 float error, sumError = 0, previousError = 0;
 const float kp_theta = 0.03;
 // const float ki_theta = 0;
@@ -49,6 +49,7 @@ int isPrint =0;
 void setup() {
   Serial.begin(9600);
   setupIMU();
+  // pinMode(13, OUTPUT);
   //Display the floating point data 
   
   // Set up motor and encoder pins
@@ -69,7 +70,7 @@ void loop() {
     if (controlState == 0) {
     readIMU_pos();// Phase 1: Position control
     positionControl_PID();
-  } else if (controlState == 1) {
+  } else {
     // Phase 2: Orientation control
     readIMU_pos();
     orientationControl_PID();
@@ -92,11 +93,13 @@ void positionControl_PID() {
     // Update error for PID
     calculatePIDError();
   }
+    // digitalWrite(13,LOW);
 
   // Stop when goal is reached
-  if (rho < 0.05) {
-    // stop();
+  if (rho < 0.1) {
+    stop();
     controlState =1; // Hold position at goal
+    // digitalWrite(13,HIGH);
     Serial.print("Reach destination");
   }
 }
@@ -117,7 +120,7 @@ void calculatePIDError() {
   currentError = theta_p - theta;
   
   differenceError = currentError - previousError;
-  Serial.print("differenceError: ");Serial.println(differenceError);
+  // Serial.print("differenceError: ");Serial.println(differenceError);
   sumError += currentError;
 
   // Calculate PID control output (error) for velocity difference between wheels
@@ -140,49 +143,82 @@ float normalizeAngle(float angle) {
 float x_imu;
 float y_imu;
 float z_imu;
-void orientationControl_PID() {
-  unsigned long currentMillis = millis();  
-  // Control motor speeds
-  if (vr > 0) rightForward(vr);
-  else rightBackward(-vr);
-  
-  if (vl > 0) leftForward(vl);
-  else leftBackward(-vl);
 
-  // Update RPM and pose periodically
-  if (currentMillis - previousMillis >= T * 1000) {
-    previousMillis = currentMillis;
-    theta = normalizeAngle(-x_imu/360*2*3.14);
-     // Update error for PID
-    //calculatePIDError();
-    float orientationError = theta_g - theta;
+float orientationError;
+ float correction;
 
+ void orientationControl_PID() {
+  // Calculate the orientation error
+  previousError = orientationError;
+  orientationError = normalizeAngle(theta_g - theta);
+
+  // If the orientation error is small, stop the robot
+  if (abs(orientationError) < 0.6) {
+    stop();
+    Serial.println("Goal reached with correct orientation!");
+    delay(3000);
+    while(1);
+  } else {
     // Control motors to rotate and adjust orientation
-    float correction = kp_theta * orientationError + kd_theta * (orientationError - previousError);
-    previousError = orientationError;
+    correction = kp_theta * orientationError + kd_theta * (orientationError - previousError);
+
+
     // Adjust wheel velocities for rotation
     vr = correction;
-    vl = -correction*0.95;
+    vl = -correction;
+    Serial.print("vr = ");Serial.print(vr); Serial.print("; vl= ");Serial.println(vl);
 
     if (vr > 0) rightForward(vr);
     else rightBackward(-vr);
     
     if (vl > 0) leftForward(vl);
     else leftBackward(-vl);
+    // Update RPM and pose periodically
     Serial.print("correction: "); Serial.print(correction);
     
-    Serial.print(", Theta: "); Serial.print(theta);
+    theta = normalizeAngle(-x_imu/360*2*3.14);
 
+    Serial.print(", Theta: "); Serial.print(theta);
     Serial.print(", orientationError: "); Serial.println(orientationError);
   }
-  // If the orientation error is small, stop the robot
-  if (abs(orientationError) < 0.2) {
-    stop();
-    Serial.println("Goal reached with correct orientation!");
-    delay(3000);
-    while(1);
-  } 
 }
+// void orientationControl_PID() {
+//   unsigned long currentMillis = millis();  
+//   // Control motor speeds
+
+//     if (vr > 0) rightForward(vr);
+//     else rightBackward(-vr);
+    
+//     if (vl > 0) leftForward(vl);
+//     else leftBackward(-vl);
+//     Serial.print("correction: "); Serial.print(correction);
+    
+//     Serial.print(", Theta: "); Serial.print(theta);
+
+//     Serial.print(", orientationError: "); Serial.println(orientationError);
+//   // Update RPM and pose periodically
+//   if (currentMillis - previousMillis >= T * 1000) {
+//     previousMillis = currentMillis;
+//     theta = normalizeAngle(-x_imu/360*2*3.14);
+//      // Update error for PID
+//     //calculatePIDError();
+//     previousError = orientationError;
+//     orientationError = normalizeAngle(theta_g - theta);
+//     // Control motors to rotate and adjust orientation
+//     correction = kp_theta * orientationError + kd_theta * (orientationError - previousError);
+//     // Adjust wheel velocities for rotation
+//     vr = -correction;
+//     vl = correction*0.95;
+
+//   }
+//   // If the orientation error is small, stop the robot
+//   if (abs(orientationError) < 0.4) {
+//     stop();
+//     Serial.println("Goal reached with correct orientation!");
+//     delay(3000);
+//     while(1);
+//   } 
+// }
 // Update the robot's position (x, y, theta)
 void updatePose() {
   v1 = RPMtoMPS(calculateRPM(counterLA)); // Left wheel velocity in m/s

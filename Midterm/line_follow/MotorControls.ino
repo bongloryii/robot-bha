@@ -6,7 +6,7 @@ int motorLpin1 = 8; // Left motor IN1
 int motorLpin2 = 9; // Left motor IN2//fw
 
 int enR = 13;  // Right motor enable pin (PWM)
-int enL = 9; // Left motor enable pin (PWM)
+int enL = 7; // Left motor enable pin (PWM)
 
 // Encoders
 int enLA = 2;  // Left motor encoder A

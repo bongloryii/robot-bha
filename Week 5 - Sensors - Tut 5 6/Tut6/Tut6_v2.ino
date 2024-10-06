@@ -42,23 +42,23 @@ float x = 0, y = 0, theta = 0;
 float x_g = 2, y_g = 3, theta_g = 0;
 
 // PID control parameters
-const float kp = 0.05;
-const float ki = 0;
+const float kp = 0.08;
+const float ki = 0.00;
 const float kd = 0;
 float error, sumError = 0, previousError = 0;
 
 // Control motion variables
-float v = 0.1, vr, vl;
+float v = 0.17, vr, vl;
 float currentError, differenceError; 
 
 int readLineFollower;
 
 // line following sensor pin
-#define OUT1 45
-#define OUT2 47
-#define OUT3 49
-#define OUT4 51
-#define OUT5 53
+#define OUT1 41
+#define OUT2 43
+#define OUT3 45
+#define OUT4 47
+#define OUT5 49
 
 // line follower variables
 int lineL1;
@@ -135,11 +135,11 @@ void PID_LineFollower(){
 }
 void calculatePIDError_line(){
   previousError = currentError;
-  currentError = -alpha * lineL2 - beta * lineL1 + beta * lineR1 + alpha * lineR2;
+  currentError = -alpha * lineL2 - beta * (lineL1 + (gamma) * (1-line0)) + beta * (lineR1 - gamma *(1-line0)) + alpha * lineR2;
   Serial.print("Current error:");Serial.println(currentError);
-  if (line0 != 1) {
-    currentError += (gamma) * (line0 + 1);
-  }
+  // if (line0 != 1) {
+  //   currentError += (gamma) * (1-line0);
+  // }
   differenceError = currentError - previousError;
   sumError += currentError;
 
