@@ -12,15 +12,14 @@
 // 1 1 1 1 1        0 Robot found continuous line : STOPPED
 // 0 0 0 0 0        0 Robot found no line: turn 180o
 
-#include "TimerOne.h"
-//use timer to read imu data every 500ms
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 #include "TimerOne.h"
+Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x29, &Wire);
 
-extern Adafruit_BNO055 bno;
+float x_imu, y_imu, z_imu;
 
 // Define motor pins and encoders
 int motorRpin1 = 10; // Right motor IN3
@@ -68,7 +67,7 @@ const float kp = 0.05;
 const float ki = 0;
 const float kd = 0;
 float error, sumError = 0, previousError = 0;
-float v = 0.15, vr, vl;
+float v = 0.15, vr, vl, vr_turn, vl_turn;
 float currentError, differenceError; 
 
 // line following sensor pin
@@ -92,11 +91,13 @@ const float gamma = 0.1; //line follower -- weight of the middle eye
 int readLineFollower;
 int start = 0;
 int target = 0;
+int turningWeight = 0.1;
+bool isObstacleInFront = false;
 
 void setup() 
-{
+{ 
   Timer1.initialize(500000);    //500ms     
-  Timer1.attachInterrupt(readLineFollowerSensor);  
+  // Timer1.attachInterrupt(readLineFollowerSensor);  
 
   setupIMU();
   ultraSetup();
@@ -133,19 +134,96 @@ void ultraSetup() {
   // pinMode(echoPin3, INPUT);
 }
 
+void setupIMU() 
+{
+  Timer1.initialize(200000);    //500ms     
+  Timer1.attachInterrupt(isReadIMUdata);  
+
+  Serial.begin(9600);
+  Serial.println("Orientation Sensor Test"); Serial.println("");
+  
+  // Initialise the sensor 
+  if(!bno.begin())
+  {
+    //There was a problem detecting the BNO055 ... check your connections 
+
+    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    while(1);
+  }    
+  bno.setExtCrystalUse(true);
+  // delay(1000);
+}
+
+
 void readLineFollowerSensor(){ 
   readLineFollower = 1;
 }
 
 void loop() 
 {
-  if (readLineFollower == 1) {
-    readLineFollower=0;
-    getLineState();
-    PID_LineFollower();
-    obstacleAvoid();
-  }
+  // turnLeft();
+  // delay(2000);
+  // // checkFrontDistance();
+  // // checkLeftDistance();
+  // if (readLineFollower = 1) {
+  //   readLineFollower=0;
+  //   getLineState();
+  //   PID_LineFollower();
+  //   // readIMU_pos();
+  //   // Serial.println("Checking obstacle avoid");
+  //   obstacleAvoid(); 
   
+  //   getLineState();
+  //   PID_LineFollower();
+  // rightForward(v);
+  // leftForward(v);
+  checkFrontDistance();
+    checkLeftDistance();
+  readIMU_pos();
+
+  // if (distance1 < maxDistance) {
+  //   isObstacleInFront = true;
+  //   obstacleAvoid();
+  // }  
+}
+
+void getLineState() {
+  lineL1 = digitalRead(OUT1);
+  lineL2 = digitalRead(OUT2);
+  line0 = digitalRead(OUT3);
+  lineR1 = digitalRead(OUT4);
+  lineR2 = digitalRead(OUT5);
+}
+
+void PID_LineFollower() {
+  // Update error for PID
+  calculatePIDError_line();
+
+  // Control motor speeds
+  if (vr > 0) {rightForward(vr);}
+  else {rightBackward(-vr);}
+  
+  if (vl > 0) {leftForward(vl);}
+  else {leftBackward(-vl);}
+  
+}
+
+void calculatePIDError_line() {
+  previousError = currentError;
+  currentError = -alpha * lineL2 - beta * lineL1 + beta * lineR1 + alpha * lineR2;
+  Serial.print("Current error:");Serial.println(currentError);
+  if (line0 != 1) {
+    currentError += (gamma) * (line0 + 1);
+  }
+  differenceError = currentError - previousError;
+  sumError += currentError;
+
+  // Calculate PID control output (error) for velocity difference between wheels
+  error = kp * currentError + ki * sumError + kd * differenceError;
+  
+  // Adjust wheel velocities
+  vr = v - error;
+  vl = v + error;
 }
 
 void checkFrontDistance() {
@@ -162,6 +240,7 @@ void checkFrontDistance() {
   Serial.println(duration1);
   distance1 = duration1 * 0.037 / 2;
   delay(60); 
+  Serial.println("Front distance: "); Serial.print(distance1);
 }
 
 void checkLeftDistance() {
@@ -177,6 +256,8 @@ void checkLeftDistance() {
   duration2 = pulseIn(echoPin2, HIGH);
   distance2 = duration2 * 0.037 / 2;
   delay(60);
+
+  Serial.println("Left distance: "); Serial.print(distance2);
 }
 
 // void checkRightDistance() {
@@ -191,87 +272,79 @@ void checkLeftDistance() {
 //   delay(60);
 // }
 
-bool isObstacleInFront = false;
+void readIMU_pos() //loop
+{
+  // if (isReadIMU ==1) {
+  //   isReadIMU=0;
+  // }
+  sensors_event_t event;
+  bno.getEvent(&event);
+  // Display the floating point data 
+  // Serial.print("X: ");
+  x_imu = event.orientation.x; 
+  y_imu = event.orientation.y;
+  z_imu = event.orientation.z;
+  // Serial.print(x_imu, 4);
+  // Serial.print("\tY: ");
+  // Serial.print(y_imu, 4);
+  // Serial.print("\tZ: ");
+  // Serial.print(z_imu, 4);
+  // Serial.println("");
+  }
+  
+
+
+void isReadIMUdata(){ 
+  isReadIMU = 1;
+  readLineFollower = 1;
+  // isPrint=1;
+}
+
+
 
 void obstacleAvoid() {
-  // front distance check
-  checkFrontDistance();
-    // Serial.print("Distance 1 2 3:");
-    // checkFrontDistance();
-    // // checkLeftDistance();
-    // // checkRightDistance();
-    // Serial.println(distance1);
-    // Serial.println(distance2);
-    // Serial.println(distance3);
-  if (distance1 < maxDistance){
-    turnRight(); // xe xoay 90 do sang phai
-    
-    isObstacleInFront = true;
-    // Serial.print("distance1 < maxDistance");
-    //     Serial.println(distance2);
-    checkLeftDistance();
-    if (distance2 < maxDistance) {
-        rightForward(v);
-        leftForward(v);
-        delay(1000);   
-        } 
-    }
+  Serial.println("Checking obstacle");
+  readIMU_pos();
+  // checkFrontDistance();
+  Serial.println("Front distance: "); Serial.print(distance1);
+  stop();
+  // while (distance1 < maxDistance) {
+  // turnRight(); // xe xoay 90 do sang phai
+  checkLeftDistance();
+  // rightForward(v);
+  // leftForward(v);
+    // isObstacleInFront = true;
+  Serial.println("Left distance: "); Serial.print(distance2);
+  while (distance2 < maxDistance) {
+    rightForward(v);
+    leftForward(v);
+  } 
+  // turnLeft();
+  rightForward(v);
+  leftForward(v);
 
-    if(lineL1 == true || lineL2 == true || line0 == true || lineR1 == true || lineR2 == true){
-      Serial.println(line0);
-      isObstacleInFront = false;
-    }
-
-    if (isObstacleInFront == true) {
-      // Serial.print("isObstacleInFront");
-      // Serial.println(isObstacleInFront);
-      checkLeftDistance();
-      if (distance2 > maxDistance) {
-        turnLeft();
-        rightForward(v);
-        leftForward(v);
-        delay(1000); 
-      }
-    }
-}
-
-void getLineState() {
-  lineL1 = digitalRead(OUT1);
-  lineL2 = digitalRead(OUT2);
-  line0 = digitalRead(OUT3);
-  lineR1 = digitalRead(OUT4);
-  lineR2 = digitalRead(OUT5);
-}
-
-void PID_LineFollower(){
-  // Update error for PID
-  calculatePIDError_line();
-
-  // Control motor speeds
-  if (vr > 0) {rightForward(vr);}
-  else {rightBackward(-vr);}
-  
-  if (vl > 0) {leftForward(vl);}
-  else {leftBackward(-vl);}
-  
-}
-
-void calculatePIDError_line(){
-  previousError = currentError;
-  currentError = -alpha * lineL2 - beta * lineL1 + beta * lineR1 + alpha * lineR2;
-  Serial.print("Current error:");Serial.println(currentError);
-  if (line0 != 1) {
-    currentError += (gamma) * (line0 + 1);
+  while (lineL1 == false & lineL2 == true || line0 == true || lineR1 == true || lineR2 == true){
+    getLineState();
+      // Serial.println(line0);
+      // isObstacleInFront = false;
+      // turnRight();
   }
-  differenceError = currentError - previousError;
-  sumError += currentError;
+  isObstacleInFront = false;
+  turnRight();
 
-  // Calculate PID control output (error) for velocity difference between wheels
-  error = kp * currentError + ki * sumError + kd * differenceError;
-  
-  // Adjust wheel velocities
-  vr = v - error;
-  vl = v + error;
+
+
+  // if (isObstacleInFront == true) {
+  //     // Serial.print("isObstacleInFront");
+  //     // Serial.println(isObstacleInFront);
+  //     checkLeftDistance();
+  //     while (distance2 > maxDistance) {
+  //       turnLeft();
+  //       rightForward(v);
+  //       leftForward(v);
+  //       // delay(1000); 
+  //     }
+  //   }
 }
 
 // Motor control functions
@@ -305,52 +378,69 @@ void leftBackward(float velocity) {
   analogWrite(enL, pwm);
 }
 
+
 void turnLeft() {
+  // readIMU_pos();
   if (isReadIMU ==1) {
     isReadIMU=0;
+  }
   sensors_event_t event;
   bno.getEvent(&event);
   start = event.orientation.x;
+  // if(start <= 360){
+  //   start = 360 - 90;
+  // }
+  target = start - 75;
+  if (target < 0) {
+    target += 360;
   }
-  if(start >= 270){
-    start -= 360;
-  }
-  target = start + 75;
-  digitalWrite(motorRpin1, HIGH);
-  digitalWrite(motorRpin2, LOW);
+  // vr_turnL = v + turnWeight;
+  // vl_turnL = v - turnWeight;
+  digitalWrite(motorRpin1, LOW);
+  digitalWrite(motorRpin2, HIGH);
   analogWrite(enR, 150);
-  while(start < target)
+  digitalWrite(motorLpin1, LOW);
+  digitalWrite(motorLpin2, HIGH);
+  analogWrite(enL, 100);
+  while((start >= target && start - target <= 180) || (start <= target && target - start >= 180))
     {
       sensors_event_t event;
       bno.getEvent(&event);
       start = event.orientation.x;
-      Serial.println(start);
-      Serial.println(theta);
+      Serial.print("start1:"); Serial.println(start);
+      Serial.print("target1:"); Serial.println(target);
     }
     stop();
 }
 
 void turnRight() {
+  // readIMU_pos();
   if (isReadIMU ==1) {
     isReadIMU=0;
+  }
   sensors_event_t event;
   bno.getEvent(&event);
   start = event.orientation.x;
-  }
+  // }
   if(start >= 270){
     start -= 360;
   }
-  target = start + 75;
-  digitalWrite(motorLpin1, HIGH);
-  digitalWrite(motorLpin2, LOW);
-  analogWrite(enL, 150);
+  target = start + 80;
+  // vr_turnR = v - turnWeight;
+  // vl_turnR = v + turnWeight;
+  digitalWrite(motorRpin1, LOW);
+  digitalWrite(motorRpin2, HIGH);
+  analogWrite(enR, 100);
+  digitalWrite(motorLpin1, LOW);
+  digitalWrite(motorLpin2, HIGH);
+  analogWrite(enL, 100);
   while(start < target)
     { 
       sensors_event_t event;
       bno.getEvent(&event);
       start = event.orientation.x;
-      Serial.println(start);
-      Serial.println(theta);
+      Serial.print("start2:"); Serial.println(start);
+      Serial.print("target2:"); Serial.println(target);
     }
     stop();
 }
