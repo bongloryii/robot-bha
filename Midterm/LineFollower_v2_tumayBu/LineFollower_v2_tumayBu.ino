@@ -27,14 +27,6 @@ int enL = 7; // Left motor enable pin (PWM)
 int enLA = 2;  // Left motor encoder A
 int enRA = 3; // Right motor encoder A
 
-// Ultrasonic
-int echoPin1 = 7; // Front ultrasonic
-int trigPin1 = 6;
-int echoPin2 = 11; // Left ultrasonic
-int trigPin2 = 10;
-int echoPin3 = 9; // Right ultrasonic
-int trigPin3 = 8;
-
 volatile unsigned int counterLA = 0;
 volatile unsigned int counterRA = 0;
 
@@ -108,13 +100,6 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(enLA), countEnLA, RISING);
   attachInterrupt(digitalPinToInterrupt(enRA), countEnRA, RISING);
 
-  // Set up 3 ultrasonic sensors
-  pinMode(trigPin1, OUTPUT);
-  pinMode(echoPin1, INPUT);
-  pinMode(trigPin2, OUTPUT);
-  pinMode(echoPin2, INPUT);
-  pinMode(trigPin3, OUTPUT);
-  pinMode(echoPin3, INPUT);
 }
 
 void readLineFollowerSensor(){ 
@@ -127,90 +112,8 @@ void loop()
     readLineFollower=0;
     getLineState();
     PID_LineFollower();
-    ObstacleAvoid();
   }
 
-  
-}
-
-void checkFrontDistance() {
-
-  digitalWrite(trigPin1, LOW);
-  delayMicroseconds(5);
-  digitalWrite(trigPin1, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin1, LOW);
-  duration1 = pulseIn(echoPin1, HIGH);
-  distance1 = duration1 * 0.037 / 2;
-  delay(60); 
-}
-
-void checkLeftDistance() {
-  
-  digitalWrite(trigPin2, LOW);
-  delayMicroseconds(5);
-  digitalWrite(trigPin2, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin2, LOW);
-  duration2 = pulseIn(echoPin2, HIGH);
-  distance2 = duration2 * 0.037 / 2;
-}
-
-void checkRightDistance() {
-  
-  digitalWrite(trigPin3, LOW);
-  delayMicroseconds(5);
-  digitalWrite(trigPin3, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin3, LOW);
-  duration3 = pulseIn(echoPin3, HIGH);
-  distance3 = duration3 * 0.037 / 2;
-}
-
-void ObstacleAvoid() {
-
-  // front distance check
-  checkFrontDistance();
-  if (distance1 < maxDistance) {
-    checkLeftDistance();
-    delay(60);
-    checkRightDistance();
-    delay(60);
-    if (distance2 < distance3)
-      turnRight();
-    else if (distance2 > distance3) {
-      turnLeft();
-    }
-  }
-  else {
-    rightForward(vr);
-    leftForward(vl);
-  }
-
-  // left distance check
-  checkLeftDistance();
-  if (distance2 < maxDistance)
-    checkRightDistance();
-    delay(60);
-    if (distance2 > distance3)
-      rightForward(vr); 
-      leftForward(vl);
-    else if (distance2 < distance3) {
-      turnRight();
-    }
-  
-
-  // right distance check
-  checkRightDistance();
-  if (distance3 < maxDistance) 
-    checkLeftDistance();
-    delay(60);
-    if (distance3 > distance2)
-      rightForward(vr);
-      leftForward(vl);
-    else if (distance3 < distance2) {
-      turnLeft();
-    }
   
 }
 
@@ -282,14 +185,6 @@ void leftBackward(float velocity) {
   digitalWrite(motorLpin1, HIGH);
   digitalWrite(motorLpin2, LOW);
   analogWrite(enL, pwm);
-}
-
-void turnLeft(float velocity) {
-
-}
-
-void turnRight(float velocity) {
-
 }
 
 // Stop motors
