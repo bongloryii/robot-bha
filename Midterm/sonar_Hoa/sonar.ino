@@ -42,16 +42,16 @@ void goForward(float velocity = 0.2){
 void followBoundary(){
 
     if (leftFollow) { //đang né vật cản
-      setSpeed(0.06,0.2);
-      if ((rightDistance>0)&&(rightDistance < 10)){// nếu đang né mà thấy sắp đụng phải vật cản 
-      setSpeed(0.2,0.05); //thì rẽ qua trái để đi xa khỏi vật cản
+      setSpeed(0.045,0.16);
+      if ((rightDistance>0)&&(rightDistance < 15)){// nếu đang né mà thấy sắp đụng phải vật cản 
+      setSpeed(0.16,0.04); //thì rẽ qua trái để đi xa khỏi vật cản
       } 
       // setSpeed(v-rightDistance*0.003,v);
     }else if (rightFollow) {//đang né vật cản
       // setSpeed(v,v-rightDistance*0.003);
-        setSpeed(0.2,0.06);
-    if ((leftDistance>0)&&(leftDistance < 10)){ 
-      setSpeed(0.05,0.2);
+        setSpeed(0.16,0.045);
+    if ((leftDistance>0)&&(leftDistance < 15)){ 
+      setSpeed(0.04,0.16);
       } 
     }
     else {//mới hay tin là phía trước có vật cản

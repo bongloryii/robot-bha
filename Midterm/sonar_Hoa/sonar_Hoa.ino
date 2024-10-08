@@ -7,7 +7,7 @@ unsigned long previousMillis = 0;
 const float T = 0.1; // Sampling rate
 
 // Control motion variables
-float v = 0.12, vr, vl;
+float v = 0.15, vr, vl;
 float currentError, differenceError;
 
 // Goal and current pose
@@ -77,14 +77,18 @@ void loop()
     followBoundary();
   }
   
-  if (((leftFollow+rightFollow)>0)&& (lineL1+lineL2+lineR1+lineR2+line0)>2){ //nếu đang follow boundary mà thấy ít nhất 2/5 đèn dò line sáng
+  if (((leftFollow+rightFollow)>0)&& (lineL1+lineL2+lineR1+lineR2+line0)>1){ //nếu đang follow boundary mà thấy ít nhất 2/5 đèn dò line sáng
     stop(); //thì ngừng lại khoảng 300ms
     delay(300);
     if (leftFollow) { //nếu mà đang ôm cua bên trái (gặp vật cản, quẹo trái, đi vòng qua vật cản và trở về line)
       // rotateLeft();
+      setSpeed(v,-v);
+      delay(600);
       setSpeed(0.2,0.05); //lúc này quay sang trái để hướng mặt về phía trước của line
     } else {
       // rotateRight();
+      setSpeed(-v,v);
+      delay(600);
       setSpeed(0.05,0.2); //tương tự cho trường hợp ôm cua bên phải
     }
     //thông báo cho con robot là sẽ về mode dò line
@@ -92,7 +96,7 @@ void loop()
     avoidObstacle = 0; 
     leftFollow = 0;
     rightFollow=0;
-    delay(200); //để robot quẹo trong khoảng 200ms
+    // delay(200); //để robot quẹo trong khoảng 200ms
   }
   if (followLine==1) {
     FollowLine(); //trạng thái follow line
