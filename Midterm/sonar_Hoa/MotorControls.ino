@@ -6,7 +6,7 @@ int motorLpin1 = 8; // Left motor IN1
 int motorLpin2 = 9; // Left motor IN2//fw
 
 int enR = 13;  // Right motor enable pin (PWM)
-int enL = 9; // Left motor enable pin (PWM)
+int enL = 7; // Left motor enable pin (PWM)
 
 // Encoders
 int enLA = 2;  // Left motor encoder A
@@ -43,7 +43,7 @@ void setSpeed(float vr, float vl){
 // Motor control functions
 void rightForward(float velocity) {
   int pwm = MPStoPWM(velocity);
-  // Serial.print("pwmr:"); Serial.println(pwm);
+  Serial.print("pwmr:"); Serial.println(pwm);
   digitalWrite(motorRpin1, LOW);
   digitalWrite(motorRpin2, HIGH);
   analogWrite(enR, pwm);
@@ -51,7 +51,7 @@ void rightForward(float velocity) {
 
 void leftForward(float velocity) {
   int pwm = MPStoPWM(velocity);
-    // Serial.print("pwml:"); Serial.println(pwm);
+    Serial.print("pwml:"); Serial.println(pwm);
   digitalWrite(motorLpin1, LOW);
   digitalWrite(motorLpin2, HIGH);
   analogWrite(enL, pwm);
@@ -104,3 +104,20 @@ void resetCounters() {
   counterLA = 0;
   counterRA = 0;
 }
+
+void goCircle(float radius, float velocity =0.2) { //plus is clockwise
+  //around a circle of 1m radius, vl=1.2vr
+  if (radius > 0 ){
+    float expected_speed_ratio = (radius + WHEEL_DISTANCE/2)/(radius - WHEEL_DISTANCE/2);
+    setSpeed(velocity/expected_speed_ratio,velocity);
+    }
+    else {
+    float expected_speed_ratio = (-radius + WHEEL_DISTANCE/2)/(-radius - WHEEL_DISTANCE/2);
+    setSpeed(velocity, velocity/expected_speed_ratio);
+    }
+}
+// void loop() 
+// {
+//   FollowLine();
+//   // readIMU();
+// }

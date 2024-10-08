@@ -11,14 +11,14 @@
 // float x_g = 2, y_g = 3, theta_g = 0;
 
 // PID control parameters
-const float kp_line = 0.13;
+const float kp_line = 0.14;
 const float ki_line = 0.008;
-const float kd_line = 0.0;
+const float kd_line = 0.06;
 float error, sumError = 0, previousError = 0;
 
-// Control motion variables
-float v = 0.15, vr, vl;
-float currentError, differenceError;
+// // Control motion variables
+// float v = 0.15, vr, vl;
+// float currentError, differenceError;
 
 // int readLineFollower;
 
@@ -54,6 +54,8 @@ void setupLineFollower() {
 
 void readLineFollowerSensor() {
   readLineFollower = 1;
+  getLineState();
+
 }
 unsigned long stopTestDuration = 0;
 unsigned long currentMillis = 0;

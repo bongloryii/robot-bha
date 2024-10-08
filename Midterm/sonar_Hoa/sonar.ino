@@ -22,9 +22,9 @@ int trigPin3 = 52; // Right ultrasonic
 int echoPin3 = 53;
 
 
-// volatile float maxFront = 15;
-float duration1, frontDistance, duration2, leftDistance, duration3, rightDistance;
-const float maxDistance = 15;
+// // volatile float maxFront = 15;
+// float duration1, frontDistance, duration2, leftDistance, duration3, rightDistance;
+// const float maxDistance = 15;
 
 void setupSonar() 
 {
@@ -36,30 +36,39 @@ void setupSonar()
   pinMode(trigPin3, OUTPUT);
   pinMode(echoPin3, INPUT);
 }
-void goCircle(float radius, float velocity =0.2) { //plus is clockwise
-  //around a circle of 1m radius, vl=1.2vr
-  if (radius > 0 ){
-    float expected_speed_ratio = (radius + WHEEL_DISTANCE/2)/(radius - WHEEL_DISTANCE/2);
-    setSpeed(velocity/expected_speed_ratio,velocity);}
-    else {
-    float expected_speed_ratio = (-radius + WHEEL_DISTANCE/2)/(-radius - WHEEL_DISTANCE/2);
-    setSpeed(velocity, velocity/expected_speed_ratio);
-    }
-}
 void goForward(float velocity = 0.2){
   setSpeed(velocity,velocity);
 }
 void followBoundary(){
 
+    if (leftFollow) {
+      setSpeed(0.05,0.2);
+      if ((rightDistance>0)&&(rightDistance < 10)){
+      setSpeed(0.2,0.05);
+      } 
+      // setSpeed(v-rightDistance*0.003,v);
+    }else if (rightFollow) {
+      // setSpeed(v,v-rightDistance*0.003);
+        setSpeed(0.2,0.05);
+    if ((leftDistance>0)&&(leftDistance < 10)){
+      setSpeed(0.05,0.2);
+      } 
+
+    }
+    else {
+
   if (!isLeftObstacle) {
     rotateLeft();
     setSpeed(0.1,0.15);
-    
+    leftFollow =1;
   } else if (!isRightObstacle) {
     rotateRight();
     setSpeed(0.15,0.1);
+    rightFollow =1;
   }
-  goForward(0.1);  
+  delay(300);
+  // goForward(0.1);  
+    }
 }
 void checkFrontDistance() {
 
@@ -84,6 +93,7 @@ void checkLeftDistance() {
   duration2 = pulseIn(echoPin2, HIGH);
   leftDistance = duration2 * 0.037 / 2;
     Serial.print("Left distance: ");Serial.print(leftDistance);
+  delay(60); 
 
 }
 
@@ -97,32 +107,42 @@ void checkRightDistance() {
   duration3 = pulseIn(echoPin3, HIGH);
   rightDistance = duration3 * 0.037 / 2;
     Serial.print("Right distance: ");Serial.print(rightDistance);
+  delay(60); 
 
 }
 void checkObstacle() {
   checkFrontDistance();
   checkLeftDistance();
   checkRightDistance();
-  if (frontDistance < maxDistance) {
+  if ((frontDistance>0)&&(frontDistance < maxDistance)) {
     isFrontObstacle = 1;
+  } else {
+        isFrontObstacle = 0;
+
   }
-  if (leftDistance < maxDistance) {
+  if ((leftDistance>0)&&(leftDistance < maxDistance)) {
     isLeftObstacle = 1;
+  } else {
+        isLeftObstacle = 0;
+
   }
-  if (rightDistance < maxDistance) {
+  if ((leftDistance>0)&&(rightDistance < maxDistance)) {
     isRightObstacle = 1;
+  } else {
+        isRightObstacle = 0;
+
   }
 }
 void rotateLeft() {
 rightForward(0.2);
 leftBackward(0.2);
-delay(500);
+delay(600);
 }
 
 void rotateRight() {
 rightBackward(0.2);
 leftForward(0.2);
-delay(500);
+delay(600);
 }
 
 // void ObstacleAvoid() {
