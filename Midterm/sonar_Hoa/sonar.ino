@@ -42,14 +42,14 @@ void goForward(float velocity = 0.2){
 void followBoundary(){
 
     if (leftFollow) {
-      setSpeed(0.05,0.2);
+      setSpeed(0.06,0.2);
       if ((rightDistance>0)&&(rightDistance < 10)){
       setSpeed(0.2,0.05);
       } 
       // setSpeed(v-rightDistance*0.003,v);
     }else if (rightFollow) {
       // setSpeed(v,v-rightDistance*0.003);
-        setSpeed(0.2,0.05);
+        setSpeed(0.2,0.06);
     if ((leftDistance>0)&&(leftDistance < 10)){
       setSpeed(0.05,0.2);
       } 
@@ -57,16 +57,16 @@ void followBoundary(){
     }
     else {
 
-  if (!isLeftObstacle) {
-    rotateLeft();
-    setSpeed(0.1,0.15);
-    leftFollow =1;
-  } else if (!isRightObstacle) {
-    rotateRight();
-    setSpeed(0.15,0.1);
-    rightFollow =1;
-  }
-  delay(300);
+    if (!isLeftObstacle) {
+      rotateLeft();
+      setSpeed(0.1,0.15);
+      leftFollow =1;
+    } else if (!isRightObstacle) {
+      rotateRight();
+      setSpeed(0.15,0.1);
+      rightFollow =1;
+    }
+    delay(300);
   // goForward(0.1);  
     }
 }

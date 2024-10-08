@@ -11,9 +11,9 @@
 // float x_g = 2, y_g = 3, theta_g = 0;
 
 // PID control parameters
-const float kp_line = 0.14;
+const float kp_line = 0.13;
 const float ki_line = 0.008;
-const float kd_line = 0.06;
+const float kd_line = 0.007;
 float error, sumError = 0, previousError = 0;
 
 // // Control motion variables
@@ -36,7 +36,7 @@ float error, sumError = 0, previousError = 0;
 // int lineR1;
 // int lineR2;
 
-const float alpha = 0.6;  //line follower -- weight of outer eyes
+const float alpha = 0.8;  //line follower -- weight of outer eyes
 const float beta = 0.2;   //line follower -- weight of inner eyes
 const float gamma = 0.1;  //line follower -- weight of the middle eye
 

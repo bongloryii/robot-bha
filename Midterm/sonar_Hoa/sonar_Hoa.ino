@@ -51,25 +51,26 @@ void loop()
 {
   if (readLineFollower ==1) {
     readLineFollower=0;
-    checkObstacle();    
-    
-  Serial.print("readLineFollower: "); Serial.println(readLineFollower);
-    Serial.print("isFrontObstacle: "); Serial.println(isFrontObstacle);
-    Serial.print("isLeftObstacle: "); Serial.println(isLeftObstacle);
-    Serial.print("isRightObstacle: "); Serial.println(isRightObstacle);
-    Serial.print("followLine: "); Serial.println(followLine);
-    Serial.print("avoidObstacle: "); Serial.println(avoidObstacle);
-    Serial.print("leftFollow: "); Serial.println(leftFollow);
-    Serial.print("rightFollow: "); Serial.println(rightFollow);
-    Serial.print("lineL1: "); Serial.println(lineL1);
-    Serial.print("lineL2: "); Serial.println(lineL2);
-    Serial.print("lineR1: "); Serial.println(lineR1);
-    Serial.print("lineR2: "); Serial.println(lineR2);
-    Serial.print("line0: "); Serial.println(line0);
-    Serial.print("rightDistance: "); Serial.println(rightDistance);
-    Serial.println("-----------------------------");
+    checkObstacle();
+  // Serial.print("readLineFollower: "); Serial.println(readLineFollower);
+  //   Serial.print("isFrontObstacle: "); Serial.println(isFrontObstacle);
+  //   Serial.print("isLeftObstacle: "); Serial.println(isLeftObstacle);
+  //   Serial.print("isRightObstacle: "); Serial.println(isRightObstacle);
+  //   Serial.print("followLine: "); Serial.println(followLine);
+  //   Serial.print("avoidObstacle: "); Serial.println(avoidObstacle);
+  //   Serial.print("leftFollow: "); Serial.println(leftFollow);
+  //   Serial.print("rightFollow: "); Serial.println(rightFollow);
+  //   Serial.print("lineL1: "); Serial.println(lineL1);
+  //   Serial.print("lineL2: "); Serial.println(lineL2);
+  //   Serial.print("lineR1: "); Serial.println(lineR1);
+  //   Serial.print("lineR2: "); Serial.println(lineR2);
+  //   Serial.print("line0: "); Serial.println(line0);
+  //   Serial.print("rightDistance: "); Serial.println(rightDistance);
+  //   Serial.println("-----------------------------");
   }
-  if ((isFrontObstacle+isLeftObstacle+isRightObstacle)>0) {
+  // if ((isFrontObstacle+isLeftObstacle+isRightObstacle)>0) {
+  if ((isFrontObstacle)>0) {
+
     followLine = 0;
     avoidObstacle= 1;
   }
@@ -77,13 +78,15 @@ void loop()
     followBoundary();
   }
   
-  if (((leftFollow+rightFollow)>0)&&(followLine ==0) && (lineL1+lineL2+lineR1+lineR2+line0)>2){
+  if (((leftFollow+rightFollow)>0)&& (lineL1+lineL2+lineR1+lineR2+line0)>2){
     stop();
-    delay(1000);
+    delay(300);
     followLine =1;
     if (leftFollow) {
+      // rotateLeft();
       setSpeed(0.2,0.05);
     } else {
+      // rotateRight();
       setSpeed(0.05,0.2);
     }
     avoidObstacle = 0; 
@@ -94,10 +97,4 @@ void loop()
   if (followLine==1) {
     FollowLine();
   }
-  
 }
-// void loop() 
-// {
-//   FollowLine();
-//   // readIMU();
-// }
