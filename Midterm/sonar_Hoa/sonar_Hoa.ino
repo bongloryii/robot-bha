@@ -69,8 +69,7 @@ void loop()
   //   Serial.println("-----------------------------");
   }
   // if ((isFrontObstacle+isLeftObstacle+isRightObstacle)>0) {
-  if ((isFrontObstacle)>0) {
-
+  if ((isFrontObstacle)>0) { // nếu có vật cản phía trước thì thoát mode dò line chuyển sang né vật cản
     followLine = 0;
     avoidObstacle= 1;
   }
@@ -78,23 +77,24 @@ void loop()
     followBoundary();
   }
   
-  if (((leftFollow+rightFollow)>0)&& (lineL1+lineL2+lineR1+lineR2+line0)>2){
-    stop();
+  if (((leftFollow+rightFollow)>0)&& (lineL1+lineL2+lineR1+lineR2+line0)>2){ //nếu đang follow boundary mà thấy ít nhất 2/5 đèn dò line sáng
+    stop(); //thì ngừng lại khoảng 300ms
     delay(300);
-    followLine =1;
-    if (leftFollow) {
+    if (leftFollow) { //nếu mà đang ôm cua bên trái (gặp vật cản, quẹo trái, đi vòng qua vật cản và trở về line)
       // rotateLeft();
-      setSpeed(0.2,0.05);
+      setSpeed(0.2,0.05); //lúc này quay sang trái để hướng mặt về phía trước của line
     } else {
       // rotateRight();
-      setSpeed(0.05,0.2);
+      setSpeed(0.05,0.2); //tương tự cho trường hợp ôm cua bên phải
     }
+    //thông báo cho con robot là sẽ về mode dò line
+    followLine =1; 
     avoidObstacle = 0; 
     leftFollow = 0;
     rightFollow=0;
-    delay(200);
+    delay(200); //để robot quẹo trong khoảng 200ms
   }
   if (followLine==1) {
-    FollowLine();
+    FollowLine(); //trạng thái follow line
   }
 }

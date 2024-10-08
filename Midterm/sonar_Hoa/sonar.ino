@@ -41,33 +41,30 @@ void goForward(float velocity = 0.2){
 }
 void followBoundary(){
 
-    if (leftFollow) {
+    if (leftFollow) { //đang né vật cản
       setSpeed(0.06,0.2);
-      if ((rightDistance>0)&&(rightDistance < 10)){
-      setSpeed(0.2,0.05);
+      if ((rightDistance>0)&&(rightDistance < 10)){// nếu đang né mà thấy sắp đụng phải vật cản 
+      setSpeed(0.2,0.05); //thì rẽ qua trái để đi xa khỏi vật cản
       } 
       // setSpeed(v-rightDistance*0.003,v);
-    }else if (rightFollow) {
+    }else if (rightFollow) {//đang né vật cản
       // setSpeed(v,v-rightDistance*0.003);
         setSpeed(0.2,0.06);
-    if ((leftDistance>0)&&(leftDistance < 10)){
+    if ((leftDistance>0)&&(leftDistance < 10)){ 
       setSpeed(0.05,0.2);
       } 
-
     }
-    else {
-
-    if (!isLeftObstacle) {
-      rotateLeft();
-      setSpeed(0.1,0.15);
-      leftFollow =1;
-    } else if (!isRightObstacle) {
+    else {//mới hay tin là phía trước có vật cản
+    if (!isLeftObstacle) { //nếu bên trái trống
+      rotateLeft(); //quẹo trái
+      setSpeed(0.1,0.15);//đi vòng tròn thuận chiều kim đồng hồ để ôm quanh vật cản
+      leftFollow =1; // lưu biến để lần tới trong vòng lặp robot sẽ biết mình đang né vật cản
+    } else if (!isRightObstacle) { //tương tự
       rotateRight();
       setSpeed(0.15,0.1);
       rightFollow =1;
     }
-    delay(300);
-  // goForward(0.1);  
+    delay(300); 
     }
 }
 void checkFrontDistance() {
