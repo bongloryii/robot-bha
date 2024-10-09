@@ -100,15 +100,20 @@ void loop()
     stop(); //thì ngừng lại khoảng 300ms
     delay(300);
     if (leftFollow) { //nếu mà đang ôm cua bên trái (gặp vật cản, quẹo trái, đi vòng qua vật cản và trở về line)
-      // rotateLeft();
+      // rotateLeft(); 
+      // delay(800);
+      while ((lineL1+lineL2+lineR1+lineR2+line0)<3){
       setSpeed(0.2,-0.02);
-      delay(800);
-      setSpeed(0.2,0.05); //lúc này quay sang trái để hướng mặt về phía trước của line
+      }
+      stop();
+      setSpeed(0.1,0.1); //lúc này quay sang trái để hướng mặt về phía trước của line
     } else {
       // rotateRight();
+      while ((lineL1+lineL2+lineR1+lineR2+line0)<3){
       setSpeed(-0.02,0.2);
-      delay(800);
-      setSpeed(0.05,0.2); //tương tự cho trường hợp ôm cua bên phải
+      }
+      stop();
+      setSpeed(0.1,0.1);//tương tự cho trường hợp ôm cua bên phải
     }
     //thông báo cho con robot là sẽ về mode dò line
     followLine =1; 
