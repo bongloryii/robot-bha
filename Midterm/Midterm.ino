@@ -31,8 +31,8 @@ void setup()
   setupMotors();
   setupSonar();
   setupIMU();
-  Timer3.initialize(500000);  //500ms
-  Timer3.attachInterrupt(printDebug);
+  // Timer3.initialize(500000);  //500ms
+  // Timer3.attachInterrupt(printDebug);
 
 }
 
@@ -46,13 +46,15 @@ volatile int line0;
 volatile int lineR1;
 volatile int lineR2;
 
-
+unsigned long startRecover; //time that startrecover mode is on
+unsigned long durationRecover;
 // volatile float maxFront = 15;
 float duration1, frontDistance, duration2, leftDistance, duration3, rightDistance;
 const float maxDistance = 30;
 int leftFollow = 0;
 int rightFollow =0;
 int isRead=0;
+int recoverFromObstacle = 0;
 void loop() 
 {
   if (isRead ==1) {
@@ -69,18 +71,17 @@ void loop()
     Serial.print("isRightObstacle: "); Serial.println(isRightObstacle);
     Serial.print("followLine: "); Serial.println(followLine);
     Serial.print("avoidObstacle: "); Serial.println(avoidObstacle);
-    Serial.print("reachedGoal: "); Serial.println(reachedGoal);
-
+    // Serial.print("reachedGoal: "); Serial.println(reachedGoal);
     Serial.print("leftFollow: "); Serial.println(leftFollow);
     Serial.print("rightFollow: "); Serial.println(rightFollow);
-    Serial.print("lineL1: "); Serial.println(lineL1);
-    Serial.print("lineL2: "); Serial.println(lineL2);
-    Serial.print("lineR1: "); Serial.println(lineR1);
-    Serial.print("lineR2: "); Serial.println(lineR2);
-    Serial.print("line0: "); Serial.println(line0);
-    Serial.print("rightDistance: "); Serial.println(rightDistance);
-    Serial.print("leftDistance: "); Serial.println(leftDistance);
-    Serial.print("frontDistance: "); Serial.println(leftDistance);
+    // Serial.print("lineL1: "); Serial.println(lineL1);
+    // Serial.print("lineL2: "); Serial.println(lineL2);
+    // Serial.print("lineR1: "); Serial.println(lineR1);
+    // Serial.print("lineR2: "); Serial.println(lineR2);
+    // Serial.print("line0: "); Serial.println(line0);
+    // Serial.print("rightDistance: "); Serial.println(rightDistance);
+    // Serial.print("leftDistance: "); Serial.println(leftDistance);
+    // Serial.print("frontDistance: "); Serial.println(leftDistance);
 
     Serial.println("-----------------------------");
   
@@ -100,22 +101,37 @@ void loop()
     delay(300);
     if (leftFollow) { //nếu mà đang ôm cua bên trái (gặp vật cản, quẹo trái, đi vòng qua vật cản và trở về line)
       // rotateLeft();
-      setSpeed(v,-v);
-      delay(600);
+      setSpeed(0.2,-0.02);
+      delay(800);
       setSpeed(0.2,0.05); //lúc này quay sang trái để hướng mặt về phía trước của line
     } else {
       // rotateRight();
-      setSpeed(-v,v);
-      delay(600);
+      setSpeed(-0.02,0.2);
+      delay(800);
       setSpeed(0.05,0.2); //tương tự cho trường hợp ôm cua bên phải
     }
     //thông báo cho con robot là sẽ về mode dò line
     followLine =1; 
+    // recoverFromObstacle = 1;
+    // startRecover = millis();
     avoidObstacle = 0; 
     leftFollow = 0;
     rightFollow=0;
+    // v=0.1;
+    // kp_line = kp_line+0.02;
     // delay(200); //để robot quẹo trong khoảng 200ms
   }
+  // if (recoverFromObstacle == 1) { 
+  //   Serial.println("recovering from obstacle");
+  //   durationRecover = millis() - startRecover;
+  //   if (durationRecover > 1000) {
+  //     v = 0.15;
+  //     recoverFromObstacle = 0;
+  //     kp_line -=0.02;
+  //     Serial.print("done recover, (kp, v)  ="); Serial.println(kp);Serial.println(v);
+
+  //   }
+  // }
   if (followLine==1) {
     FollowLine(); //trạng thái follow line
   }

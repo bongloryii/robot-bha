@@ -9,7 +9,7 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x29, &Wire);
 
 void setupIMU() 
 {
-  Timer1.initialize(300000);    //100ms     
+  Timer1.initialize(200000);    //100ms     
   Timer1.attachInterrupt(isReadTime);  
 
   Serial.begin(9600);
