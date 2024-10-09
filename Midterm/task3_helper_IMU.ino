@@ -7,11 +7,10 @@
 #include "TimerOne.h"
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x29, &Wire);
 
-
 void setupIMU() 
 {
-  Timer1.initialize(100000);    //500ms     
-  Timer1.attachInterrupt(isReadIMUdata);  
+  Timer1.initialize(300000);    //100ms     
+  Timer1.attachInterrupt(isReadTime);  
 
   Serial.begin(9600);
   Serial.println("Orientation Sensor Test"); Serial.println("");
@@ -52,7 +51,19 @@ void readIMU_pos() //loop
   }
   
 }
-void isReadIMUdata(){ 
-  isReadIMU = 1;
+void isReadTime(){ 
+  isRead = 1;
+  getLineState();
   // isPrint=1;
+}
+
+float normalizeAngle(float angle) {
+  // Normalize the angle to the range [-π, π]
+  while (angle > M_PI) {
+    angle -= 2 * M_PI;
+  }
+  while (angle < -M_PI) {
+    angle += 2 * M_PI;
+  }
+  return angle;
 }

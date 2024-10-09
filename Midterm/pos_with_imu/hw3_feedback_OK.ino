@@ -80,6 +80,8 @@ void setup() {
 }
 
 void loop() {
+  Serial.print("v=");Serial.println(v);
+
   readIMU_pos();
   positionControl();
 }
