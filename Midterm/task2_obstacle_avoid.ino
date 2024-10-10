@@ -8,6 +8,8 @@ void followBoundary(){
       setSpeed(0.045,0.16);
       if ((rightDistance>0)&&(rightDistance < 15)){// nếu đang né mà thấy sắp đụng phải vật cản 
       setSpeed(0.16,0.04); //thì rẽ qua trái để đi xa khỏi vật cản
+      } else if ((rightDistance>0)&&(rightDistance > 15)){// nếu đang né mà thấy sắp quá xa vật cản 
+      setSpeed(0.045,0.16); //thì rẽ qua phải để đi quanh khỏi vật cản
       } 
       // setSpeed(v-rightDistance*0.003,v);
     }else if (rightFollow) {//đang né vật cản
@@ -15,6 +17,8 @@ void followBoundary(){
         setSpeed(0.16,0.045);
     if ((leftDistance>0)&&(leftDistance < 15)){ 
       setSpeed(0.04,0.16);
+      } else if ((rightDistance>0)&&(leftDistance > 15)){// nếu đang né mà thấy sắp quá xa vật cản 
+      setSpeed(0.16,0.045); //thì rẽ qua trái để đi quanh khỏi vật cản
       } 
     }
     else {//mới hay tin là phía trước có vật cản

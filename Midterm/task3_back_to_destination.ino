@@ -7,9 +7,6 @@ volatile unsigned long totalCounterRA = 0;
 int pwmValue = 150; //preset value for right wheel in circle control
 int isReadIMU = 0;
 
-float rpmLA = 0; 
-float rpmRA = 0; 
-
 // unsigned long previousMillis = 0;
 
 // motion control
@@ -22,13 +19,13 @@ float theta = 0;
 int interval = T*1000; //delay between rpm calculations in ms
 
 // // goal
-// float x_g = 0.5;
-// float y_g = 2.8;
-// float theta_g = 3.14;
+float x_g = 0.5;
+float y_g = 3;
+float theta_g = 3.12;
 
-float x_g = 0;
-float y_g = 0;
-float theta_g = 0;
+// float x_g = 0;
+// float y_g = 0;
+// float theta_g = 0;
 // control parameter
 float gamma = 0.12;
 float lamda = 0.4;
@@ -42,10 +39,8 @@ void positionControl(){
   // calculatePIDError_position();
 
   calculateMotion();
-  //set speed
-  rightForward(vr);
-  leftForward(vl);
-  if (currentMillis - previousMillis >= interval) {  // Check if 1 second has passed
+  setSpeed(vr,vl);
+  if (currentMillis - previousMillis >= interval) {  // Check if 0.1 second has passed
     previousMillis = currentMillis;  // Save the last time pulse count was checked
     //get current speed
     rpmLA = calculateRPM(counterLA);    
@@ -59,6 +54,9 @@ void positionControl(){
     // if ((atan2(deltaX, deltaY)<(theta_g+0.1))&&(atan2(deltaX, deltaY)>(theta_g-0.1))) {
     stop();
     delay(3000);
+    reachedDestination =1;
+    // while(1);
+    
   // }
   }
 }

@@ -9,10 +9,8 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x29, &Wire);
 
 void setupIMU() 
 {
-  Timer1.initialize(200000);    //100ms     
-  Timer1.attachInterrupt(isReadTime);  
 
-  Serial.begin(9600);
+  // Serial.begin(9600);
   Serial.println("Orientation Sensor Test"); Serial.println("");
   
   // Initialise the sensor 
@@ -24,7 +22,7 @@ void setupIMU()
     while(1);
   }    
   bno.setExtCrystalUse(true);
-  // delay(1000);
+  delay(1000);
 }
 void readIMU_noTimer(){
   
@@ -50,11 +48,6 @@ void readIMU_pos() //loop
   // Serial.println("");
   }
   
-}
-void isReadTime(){ 
-  isRead = 1;
-  getLineState();
-  // isPrint=1;
 }
 
 float normalizeAngle(float angle) {
