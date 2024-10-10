@@ -39,7 +39,7 @@ unsigned long previousMillis = 0;
 const float T = 0.2; // Sampling rate
 
 // Control motion variables
-float v = 0.15, vr, vl;
+float v = 0.13, vr, vl;
 float currentError, differenceError;
 
 // Goal and current pose
@@ -100,16 +100,16 @@ void loop()
   if (isRead ==1) {
     // readLineFollower=0;
     isRead=0;
-    if (reachedGoal) {
-      readIMU_noTimer();
-    }    
+    // if (reachedGoal) {
+    //   readIMU_noTimer();
+    // }    
     checkObstacle();
     // localize();
     //get current speed
-    rpmLA = calculateRPM(counterLA);    
-    Serial.print("RPM_L = "); Serial.print(rpmLA);
-    rpmRA = calculateRPM(counterRA);    
-    Serial.print("; RPM_R = "); Serial.println(rpmRA);
+    // rpmLA = calculateRPM(counterLA);    
+    // Serial.print("RPM_L = "); Serial.print(rpmLA);
+    // rpmRA = calculateRPM(counterRA);    
+    // Serial.print("; RPM_R = "); Serial.println(rpmRA);
     // resetCounters();
     // localize();
     // getLineState();
@@ -138,15 +138,15 @@ Serial.print("rightDistance: "); Serial.println(rightDistance);
   
   } 
   // if ((isFrontObstacle+isLeftObstacle+isRightObstacle)>0) {
-  if ((isFrontObstacle)>0) { // nếu có vật cản phía trước thì thoát mode dò line chuyển sang né vật cản
+  if ((reachedGoal ==0)&&((isFrontObstacle)>0)) { // nếu có vật cản phía trước thì thoát mode dò line chuyển sang né vật cản
     followLine = 0;
     avoidObstacle= 1;
   }
-  if (avoidObstacle) {
+  if ((reachedGoal ==0)&&(avoidObstacle)) {
     followBoundary();
   }
   
-  if (((leftFollow+rightFollow)>0) && (lineL1+lineL2+lineR1+lineR2+line0)>0){ //nếu đang follow boundary mà thấy ít nhất 2/5 đèn dò line sáng
+  if ((reachedGoal ==0)&&(((leftFollow+rightFollow)>0) && (lineL1+lineL2+lineR1+lineR2+line0)>0)){ //nếu đang follow boundary mà thấy ít nhất 2/5 đèn dò line sáng
     Serial.println("OBSTACLE FREE, BACK TO LINE");
     stop(); //thì ngừng lại khoảng 300ms
     delay(300);
@@ -192,10 +192,13 @@ Serial.print("rightDistance: "); Serial.println(rightDistance);
 
   //   }
   // }
-  if (followLine==1) {
+  if ((reachedGoal ==0)&&(followLine==1)) {
     FollowLine(); //trạng thái follow line
   }
   if (reachedGoal ==1) {
+    // v=0.15;
+    followLine=0;
+    avoidObstacle = 0;
     positionControl();
   }
   if (reachedDestination ==1) {

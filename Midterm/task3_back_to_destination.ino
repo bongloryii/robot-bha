@@ -6,9 +6,9 @@ const float kp = 0.13;
 const float ki = 0.0;
 const float kd = 0.05;
 // // goal
-float x_g = 0.7;
-float y_g = 2.8;
-float theta_g = 3.14;
+float x_g =1;
+float y_g = 2.5;
+float theta_g = 1.2;
 
 volatile unsigned long totalCounterLA = 0; 
 volatile unsigned long totalCounterRA = 0; 
@@ -39,7 +39,7 @@ float rho, phi, alpha, w, wr, wl, v1, v2;
 void positionControl(){
   unsigned long currentMillis = millis();  // Get current time
   transformCoordinate();
-  calculatePIDError_position();
+  // calculatePIDError_position();
 
   calculateMotion();
   setSpeed(vr,vl);
@@ -69,9 +69,9 @@ void localize() { //update pose
   v2 = RPMtoMPS(rpmRA); //right motor
   x = x + (v1 + v2) / 2 * cos(theta) * T;
   y = y + (v1 + v2) / 2 * sin(theta) * T;
-  // theta = theta + (v2 - v1) / WHEEL_DISTANCE * T;
+  theta = normalizeAngle(theta + (v2 - v1) / WHEEL_DISTANCE * T);
   // readIMU_noTimer();
-  theta = normalizeAngle(-x_imu/360*2*3.14);
+  // theta = normalizeAngle(-x_imu/360*2*3.14);
   
   Serial.print("X: "); Serial.print(x); Serial.print(", Y: "); Serial.print(y);
   Serial.print(", Theta: "); Serial.println(theta);
@@ -90,7 +90,7 @@ void calculateMotion() {
   w = lamda * alpha + gamma * cos(alpha) * sin(alpha) * (alpha + h * phi) / alpha;
   vr = v + WHEEL_DISTANCE * w / 2;
   vl = v - WHEEL_DISTANCE * w / 2;
-  Serial.print("vl = ");Serial.print(vl);Serial.print("vr= ");Serial.println(vr);
+  Serial.print("BACK TO DESTINATION vl = ");Serial.print(vl);Serial.print("vr= ");Serial.println(vr);
   // wr = vr / WHEEL_RADIUS * 60 / (2 * M_PI);  // angular velocity in rpm
   // wl = vl / WHEEL_RADIUS * 60 / (2 * M_PI);
 }
@@ -122,7 +122,7 @@ void calculatePIDError_position() {
   sumError_position += currentError_position;
 
   // Calculate PID control output (error) for velocity difference between wheels
-  phi = kp * currentError_position + ki * sumError_position + kd * differenceError_position;
+  phi = normalizeAngle(kp * currentError_position + ki * sumError_position + kd * differenceError_position);
   
   // // Adjust wheel velocities
   // vr = v+faster + error_position;
