@@ -55,6 +55,7 @@ void FollowLine()  //loop
         stop();
         followLine=0;
     reachedGoal =1;
+    v=0.1;
     // Serial.println("REACHED GOAL. BACK TO DESTINATION.");
     delay(1000);
       // x=0;y=0;theta=0;

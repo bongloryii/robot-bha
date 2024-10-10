@@ -6,7 +6,7 @@
 #include <utility/imumaths.h>
 #include "TimerOne.h"
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x29, &Wire);
-
+float x_imu;
 void setupIMU() 
 {
   // Serial.begin(9600);
@@ -48,13 +48,13 @@ void readIMU_pos() //loop
   
 }
 
-float normalizeAngle(float angle) {
-  // Normalize the angle to the range [-π, π]
-  while (angle > M_PI) {
-    angle -= 2 * M_PI;
-  }
-  while (angle < -M_PI) {
-    angle += 2 * M_PI;
-  }
-  return angle;
-}
+// float normalizeAngle(float angle) {
+//   // Normalize the angle to the range [-π, π]
+//   while (angle > M_PI) {
+//     angle -= 2 * M_PI;
+//   }
+//   while (angle < -M_PI) {
+//     angle += 2 * M_PI;
+//   }
+//   return angle;
+// }

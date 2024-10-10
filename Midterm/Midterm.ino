@@ -97,22 +97,13 @@ int rightFollow =0;
 int recoverFromObstacle = 0;
 void loop() 
 {
-  if (isRead ==1) {
+  if ((reachedGoal ==0)&&(isRead ==1)) {
     // readLineFollower=0;
     isRead=0;
     // if (reachedGoal) {
     //   readIMU_noTimer();
     // }    
     checkObstacle();
-    // localize();
-    //get current speed
-    // rpmLA = calculateRPM(counterLA);    
-    // Serial.print("RPM_L = "); Serial.print(rpmLA);
-    // rpmRA = calculateRPM(counterRA);    
-    // Serial.print("; RPM_R = "); Serial.println(rpmRA);
-    // resetCounters();
-    // localize();
-    // getLineState();
   }
   if (isPrint == 1){
     isPrint=0;
@@ -197,9 +188,27 @@ Serial.print("rightDistance: "); Serial.println(rightDistance);
   }
   if (reachedGoal ==1) {
     // v=0.15;
-    followLine=0;
-    avoidObstacle = 0;
-    positionControl();
+    while (reachedGoal==1){
+      setSpeed(0.16,0.16);
+      delay(4500);
+      stop();
+      delay(200);
+      rightForward(0.2);
+leftBackward(0.2);
+delay(650);
+      stop();
+      setSpeed(0.2,0.2);
+      delay(10000);
+      reachedGoal=0;
+      stop();
+      delay(4000);
+      break;
+    }
+          reachedGoal=0;
+
+    // followLine=0;
+    // avoidObstacle = 0;
+    // positionControl();
   }
   if (reachedDestination ==1) {
     stop();
