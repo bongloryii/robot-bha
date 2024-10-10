@@ -2,6 +2,14 @@ float x_imu;
 // float y_imu;
 // float z_imu;
 
+const float kp = 0.13;
+const float ki = 0.0;
+const float kd = 0.05;
+// // goal
+float x_g = 0.7;
+float y_g = 2.8;
+float theta_g = 3.14;
+
 volatile unsigned long totalCounterLA = 0; 
 volatile unsigned long totalCounterRA = 0; 
 int pwmValue = 150; //preset value for right wheel in circle control
@@ -18,16 +26,11 @@ float theta = 0;
 
 int interval = T*1000; //delay between rpm calculations in ms
 
-// // goal
-float x_g = 0.5;
-float y_g = 3;
-float theta_g = 3.12;
-
 // float x_g = 0;
 // float y_g = 0;
 // float theta_g = 0;
 // control parameter
-float gamma = 0.12;
+float gamma = 0.13;
 float lamda = 0.4;
 float h = 0.03;
 
@@ -36,7 +39,7 @@ float rho, phi, alpha, w, wr, wl, v1, v2;
 void positionControl(){
   unsigned long currentMillis = millis();  // Get current time
   transformCoordinate();
-  // calculatePIDError_position();
+  calculatePIDError_position();
 
   calculateMotion();
   setSpeed(vr,vl);
@@ -100,9 +103,6 @@ double calculateDistance(long counterL, long counterR){
 }
 float previousError_position;
 
-const float kp = 0.1;
-const float ki = 0.0;
-const float kd = 0.05;
 float currentError_position, differenceError_position, sumError_position;
 void calculatePIDError_position() {
   float deltaX = x_g - x;

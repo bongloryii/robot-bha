@@ -56,7 +56,7 @@ void FollowLine()  //loop
 reachedGoal =1;
     Serial.println("REACHED GOAL. BACK TO DESTINATION.");
     delay(1000);
-      
+      // x=0;y=0;theta=0;
     setupIMU();
   }
 }

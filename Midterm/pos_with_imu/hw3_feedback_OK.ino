@@ -45,12 +45,12 @@ const float T = 0.1; //sampling rate
 int interval = T*1000; //delay between rpm calculations in ms
 
 // // goal
-float x_g = 0.5;
+float x_g = 0.7;
 float y_g = 2.8;
 float theta_g = 3.14;
 
 // control parameter
-float gamma = 0.12;
+float gamma = 0.13;
 float lamda = 0.4;
 float h = 0.03;
 
@@ -89,7 +89,7 @@ void loop() {
 void positionControl(){
   unsigned long currentMillis = millis();  // Get current time
   transformCoordinate();
-  // calculatePIDError();
+  calculatePIDError();
 
   calculateMotion();
   //set speed
@@ -222,7 +222,7 @@ float normalizeAngle(float angle) {
 }
 float previousError;
 
-const float kp = 0.1;
+const float kp = 0.13;//0.1
 const float ki = 0.0;
 const float kd = 0.05;
 float currentError, differenceError, sumError;
