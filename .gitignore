@@ -1,0 +1,46 @@
+
+HW1/Media/Task 1.MOV
+HW1/Media/Task 2.mp4
+HW1/Media/Task 3.MOV
+HW2/HW2.zip
+HW2/media/TASK 3_STRAIGHT LINE 1M.mp4
+HW2/media/TASK 4_FULL CIRCLE.mp4
+HW2/media/TASK 5_HALF CIRCLE.mp4
+libraries/Esplora/examples/Beginners/EsploraAccelerometer/EsploraAccelerometer.ino
+libraries/Esplora/examples/Beginners/EsploraBlink/EsploraBlink.ino
+libraries/Esplora/examples/Beginners/EsploraJoystickMouse/EsploraJoystickMouse.ino
+libraries/Esplora/examples/Beginners/EsploraLedShow/EsploraLedShow.ino
+libraries/Esplora/examples/Beginners/EsploraLedShow2/EsploraLedShow2.ino
+libraries/Esplora/examples/Beginners/EsploraLightCalibrator/EsploraLightCalibrator.ino
+libraries/Esplora/examples/Beginners/EsploraMusic/EsploraMusic.ino
+libraries/Esplora/examples/Beginners/EsploraSoundSensor/EsploraSoundSensor.ino
+libraries/Esplora/examples/Beginners/EsploraTemperatureSensor/EsploraTemperatureSensor.ino
+libraries/Esplora/examples/Experts/EsploraKart/EsploraKart.ino
+libraries/Esplora/examples/Experts/EsploraPong/EsploraPong.ino
+libraries/Esplora/examples/Experts/EsploraRemote/EsploraRemote.ino
+libraries/Esplora/examples/Experts/EsploraTable/EsploraTable.ino
+libraries/Esplora/keywords.txt
+libraries/Esplora/library.properties
+libraries/Esplora/README.adoc
+libraries/Esplora/src/Esplora.cpp
+libraries/Esplora/src/Esplora.h
+libraries/LoRa/API.md
+libraries/LoRa/examples/LoRaDumpRegisters/LoRaDumpRegisters.ino
+libraries/LoRa/examples/LoRaDuplex/LoRaDuplex.ino
+libraries/LoRa/examples/LoRaDuplexCallback/LoRaDuplexCallback.ino
+libraries/LoRa/examples/LoRaReceiver/LoRaReceiver.ino
+libraries/LoRa/examples/LoRaReceiverCallback/LoRaReceiverCallback.ino
+libraries/LoRa/examples/LoRaSender/LoRaSender.ino
+libraries/LoRa/examples/LoRaSenderNonBlocking/LoRaSenderNonBlocking.ino
+libraries/LoRa/examples/LoRaSenderNonBlockingCallback/LoRaSenderNonBlockingCallback.ino
+libraries/LoRa/examples/LoRaSetSpread/LoRaSetSpread.ino
+libraries/LoRa/examples/LoRaSetSyncWord/LoRaSetSyncWord.ino
+libraries/LoRa/examples/LoRaSimpleGateway/LoRaSimpleGateway.ino
+libraries/LoRa/examples/LoRaSimpleNode/LoRaSimpleNode.ino
+libraries/LoRa/issue_template.md
+libraries/LoRa/keywords.txt
+libraries/LoRa/library.properties
+libraries/LoRa/LICENSE
+libraries/LoRa/README.md
+libraries/LoRa/src/LoRa.cpp
+libraries/LoRa/src/LoRa.h
