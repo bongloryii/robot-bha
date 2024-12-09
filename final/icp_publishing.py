@@ -18,7 +18,7 @@ class LidarICPNode(Node):
         )
         self.publisher = self.create_publisher(Pose, '/robot_pose', 10)  # Publisher for Pose message
         self.prev_scan = None  # Store the previous scan
-        self.pose = np.array([1.37, 2.17, 3.13])  # Initial pose: [x, y, theta]
+        self.pose = np.array([1,3,0])  # Initial pose: [x, y, theta]
         self.csv_file = open('robot_pose.csv', 'w', newline='')
         self.csv_writer = csv.writer(self.csv_file)
         self.csv_writer.writerow(['x', 'y', 'theta'])  # Write CSV header
