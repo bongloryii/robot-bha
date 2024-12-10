@@ -52,6 +52,7 @@ class PathPlanner(Node):
 
         # Load map data and create a grid
         self.grid_map = self.load_and_preprocess_map('Sim_WorldFinalV3.csv')
+        self.scale_and_save_grid_map()
 
         # Generate path using A*
         self.path_grid = self.generate_path(self.start, self.goal)
@@ -70,6 +71,25 @@ class PathPlanner(Node):
         # Initialize path-following variables
         self.current_waypoint_index = 0
 
+    def scale_and_save_grid_map(self, output_file="grid_map.npy"):
+        # Original grid dimensions
+        grid_height, grid_width = self.grid_map.shape
+        
+        # Destination coordinate bounds
+
+        x_range = self.x_max - self.x_min
+        y_range = self.y_max - self.y_min
+        
+        # Compute scaling factors based on the destination size
+        x_scale = x_range / grid_width
+        y_scale = y_range / grid_height
+        
+        # Rescale the grid map
+        scaled_grid_map = zoom(self.grid_map, (y_scale, x_scale), order=1)
+        
+        # Save scaled grid map to .npy
+        np.save(output_file, scaled_grid_map)
+        print(f"Scaled grid map saved to {output_file}")
     def pose_callback(self, msg):
         # Store position and orientation as instance variables
         self.current_position = msg.position
@@ -260,6 +280,8 @@ class PathPlanner(Node):
                     path.append(current)
                     current = came_from[current]
                 path.append(start)
+                np.save("path.npy", path[::-1])
+
                 # return path[::-1], g_score_values, heuristic_values, all_visited_nodes  # Return path, g_score, heuristic, visited nodes
                 return path[::-1] # Return path, g_score, heuristic, visited nodes
             
