@@ -8,6 +8,7 @@ import numpy as np
 import heapq
 from geometry_msgs.msg import Pose  # Assuming PoseStamped is used
 from scipy.ndimage import zoom
+from scipy.ndimage import binary_dilation
 
 class PathPlanner(Node):
     def __init__(self):
@@ -54,13 +55,14 @@ class PathPlanner(Node):
         # Generate path using A*
         self.path_grid = self.generate_path(self.start, self.goal)
         self.path_real = [self.grid_to_map(point) for point in self.path_grid]
+        self.path_real.append(self.goal_map)
         print(self.path_grid)
-        print(self.path_real)
+        # print(self.path_real)
 
         # Debug: Print path points
         self.get_logger().info('Generated Path Points:')
-        for point in self.path_grid:
-            self.get_logger().info(f'{self.grid_to_map(point)}')  # Convert back to map coordinates for debugging
+        for point in self.path_real:
+            self.get_logger().info(f'{point[0]:.2f},{point[1]:.2f}')  # Convert back to map coordinates for debugging
 
         # Visualize the grid and path
         self.visualize_path()
@@ -95,8 +97,8 @@ class PathPlanner(Node):
     #         self.get_logger().warn("Pose data is not available yet.")
     def get_ahead_point(self,ahead_distance=0.15):
        
-        x_ap = self.pose[0]*(1+np.cos(self.pose[2])*ahead_distance)
-        y_ap = self.pose[1]*(1+np.sin(self.pose[2])*ahead_distance)
+        x_ap = self.current_position.x*(1+np.cos(self.current_yaw)*ahead_distance)
+        y_ap = self.current_position.y*(1+np.sin(self.current_yaw)*ahead_distance)
         return np.array([x_ap, y_ap])
 
     def find_closest_path_point(self,ahead_point, path):
@@ -206,76 +208,100 @@ class PathPlanner(Node):
                     # )
 
         return obstacle_grid
-    def generate_path(self, start, goal):
-        # def heuristic(a, b):
-        #     return abs(a[0] - b[0]) + abs(a[1] - b[1])  # Manhattan distance
+    # def generate_path(self, start, goal):
+    #     def heuristic(a, b):
+    #         # return 10*np.linalg.norm(np.array(a) - np.array(b))
+    #         return 10*max(abs(a[0] - b[0]), abs(a[1] - b[1]))
+       
+    #     directions = [(-1, 0), (1, 0), (0, -1), (0, 1),  # Horizontal and vertical
+    #                 (-1, -1), (-1, 1), (1, -1), (1, 1)]  # Diagonal directions
+    #         # Priority queue (open set) for A* with (f_score, current_position)
+            
+    #     open_set = []
+    #     heapq.heappush(open_set, (0 + heuristic(start, goal), 0, start))
+        
+    #     # Maps to track the shortest path
+    #     came_from = {}
+    #     g_score = {start: 0}
+        
+    #     # To track g_score and heuristic for plotting
+    #     g_score_values = {start: 0}
+    #     heuristic_values = {start: heuristic(start, goal)}
+        
+    #     # To track all visited nodes for displaying g_score and heuristic
+    #     all_visited_nodes = []
 
-        # frontier = PriorityQueue()
-        # frontier.put((0, start))
-        # came_from = {}
-        # cost_so_far = {start: 0}
+    #     while open_set:
+    #         _, current_g_score, current = heapq.heappop(open_set)
+            
+    #         # Record all visited nodes
+    #         all_visited_nodes.append(current)
 
-        # while not frontier.empty():
-        #     _, current = frontier.get()
+    #         # If we reach the goal, reconstruct the path
+    #         if current == goal:
+    #             path = []
+    #             while current in came_from:
+    #                 path.append(current)
+    #                 current = came_from[current]
+    #             path.append(start)
+    #             np.save("path.npy", path[::-1])
+    #             # return path[::-1], g_score_values, heuristic_values, all_visited_nodes  # Return path, g_score, heuristic, visited nodes
+    #             return path[::-1] # Return path, g_score, heuristic, visited nodes
+            
+    #         # Check neighbors
+    #         for direction in directions:
+    #             neighbor = (current[0] + direction[0], current[1] + direction[1])
+    #             # Check bounds and obstacles
+    #             if 0 <= neighbor[0] < self.num_x_cells and 0 <= neighbor[1] < self.num_y_cells and not self.grid_map[neighbor[1], neighbor[0]]:
+    #                 # For diagonals, the cost is 14, for horizontal/vertical, it's 10
+    #                 if direction in [(-1, -1), (-1, 1), (1, -1), (1, 1)]:  # Diagonal directions
+    #                     tentative_g_score = current_g_score + 14
+    #                 else:  # Horizontal or vertical
+    #                     tentative_g_score = current_g_score + 10
+                    
+    #                 if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
+    #                     came_from[neighbor] = current
+    #                     g_score[neighbor] = tentative_g_score
+    #                     g_score_values[neighbor] = tentative_g_score
+    #                     heuristic_values[neighbor] = heuristic(neighbor, goal)
+    #                     f_score = tentative_g_score + heuristic_values[neighbor]
+    #                     heapq.heappush(open_set, (f_score, tentative_g_score, neighbor))
+        
+    #     # return [], g_score_values, heuristic_values, all_visited_nodes  # No path found
+    #     return []
 
-        #     if current == goal:
-        #         break
 
-        #     # Define valid neighbors (4-connected grid)
-        #     neighbors = [
-        #         (current[0] + dx, current[1] + dy)
-        #         for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        #     ]
-
-        #     for neighbor in neighbors:
-        #         # Check if within bounds and not an obstacle
-        #         if (
-        #             0 <= neighbor[0] < self.grid_map.shape[0]
-        #             and 0 <= neighbor[1] < self.grid_map.shape[1]
-        #             and self.grid_map[neighbor[0], neighbor[1]] == 0
-        #         ):
-        #             new_cost = cost_so_far[current] + 1  # Uniform cost
-        #             if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
-        #                 cost_so_far[neighbor] = new_cost
-        #                 priority = new_cost + heuristic(goal, neighbor)
-        #                 frontier.put((priority, neighbor))
-        #                 came_from[neighbor] = current
-
-        # # Reconstruct path
-        # path = []
-        # current = goal
-        # while current != start:
-        #     path.append(current)
-        #     current = came_from.get(current, start)
-        # path.append(start)
-        # path.reverse()
-        # return path
-        # Directions for moving: left, right, down, up, and diagonals
-        # Function to calculate the Euclidean distance (heuristic for A*)
+    def generate_path(self, start, goal, dilation_radius=1):
         def heuristic(a, b):
             # return 10*np.linalg.norm(np.array(a) - np.array(b))
             return 10*max(abs(a[0] - b[0]), abs(a[1] - b[1]))
-       
+
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1),  # Horizontal and vertical
                     (-1, -1), (-1, 1), (1, -1), (1, 1)]  # Diagonal directions
-            # Priority queue (open set) for A* with (f_score, current_position)
+
+        # Create a dilated obstacle grid using binary dilation
+        # 1 is considered as obstacle and 0 as free space
+        dilated_obstacles = binary_dilation(self.grid_map, structure=np.ones((2 * dilation_radius + 1, 2 * dilation_radius + 1)))
+        dilated_obstacles = dilated_obstacles.astype(int)
+
+        # Priority queue (open set) for A* with (f_score, current_position)
         open_set = []
         heapq.heappush(open_set, (0 + heuristic(start, goal), 0, start))
-        
+
         # Maps to track the shortest path
         came_from = {}
         g_score = {start: 0}
-        
+
         # To track g_score and heuristic for plotting
         g_score_values = {start: 0}
         heuristic_values = {start: heuristic(start, goal)}
-        
+
         # To track all visited nodes for displaying g_score and heuristic
         all_visited_nodes = []
 
         while open_set:
             _, current_g_score, current = heapq.heappop(open_set)
-            
+
             # Record all visited nodes
             all_visited_nodes.append(current)
 
@@ -287,20 +313,20 @@ class PathPlanner(Node):
                     current = came_from[current]
                 path.append(start)
                 np.save("path.npy", path[::-1])
-                # return path[::-1], g_score_values, heuristic_values, all_visited_nodes  # Return path, g_score, heuristic, visited nodes
-                return path[::-1] # Return path, g_score, heuristic, visited nodes
-            
+                return path[::-1]  # Return path
+
             # Check neighbors
             for direction in directions:
                 neighbor = (current[0] + direction[0], current[1] + direction[1])
-                # Check bounds and obstacles
-                if 0 <= neighbor[0] < self.num_x_cells and 0 <= neighbor[1] < self.num_y_cells and not self.grid_map[neighbor[1], neighbor[0]]:
+
+                # Check bounds and obstacles in dilated grid
+                if 0 <= neighbor[0] < self.num_x_cells and 0 <= neighbor[1] < self.num_y_cells and dilated_obstacles[neighbor[1], neighbor[0]] == 0:
                     # For diagonals, the cost is 14, for horizontal/vertical, it's 10
                     if direction in [(-1, -1), (-1, 1), (1, -1), (1, 1)]:  # Diagonal directions
                         tentative_g_score = current_g_score + 14
                     else:  # Horizontal or vertical
                         tentative_g_score = current_g_score + 10
-                    
+
                     if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
                         came_from[neighbor] = current
                         g_score[neighbor] = tentative_g_score
@@ -308,9 +334,8 @@ class PathPlanner(Node):
                         heuristic_values[neighbor] = heuristic(neighbor, goal)
                         f_score = tentative_g_score + heuristic_values[neighbor]
                         heapq.heappush(open_set, (f_score, tentative_g_score, neighbor))
-        
-        # return [], g_score_values, heuristic_values, all_visited_nodes  # No path found
-        return []
+
+        return []  # No path found
     def visualize_path(self):
         plt.figure(figsize=(8, 8))
 
@@ -354,9 +379,9 @@ class PathPlanner(Node):
         plt.legend()
         # plt.grid()
         # Show the grid and path
-
+        plt.savefig("path.png")
         # Adjust ticks: multiply by grid_resolution for real-world coordinates
-        plt.show()
+        # plt.show()
 
     def scale_and_save_grid_map(self, output_file="grid_map.npy"):
         # Original grid dimensions
@@ -377,62 +402,195 @@ class PathPlanner(Node):
         # Save scaled grid map to .npy
         np.save(output_file, scaled_grid_map)
         print(f"Scaled grid map saved to {output_file}")
-    def follow_path_callback(self):
-        # Check if the path and pose data are available
-        if self.current_position is None or self.current_waypoint_index > len(self.path_real):
-            return
-        if self.current_waypoint_index==len(self.path_real):
-            target_waypoint = self.goal_map
-        else:
-            # Get the current waypoint
-            target_waypoint = self.path_real[self.current_waypoint_index]
-        target_x, target_y = target_waypoint
+    # def follow_path_callback_wo_ap(self):
+    #     # Check if the path and pose data are available
+    #     if self.current_position is None or self.current_waypoint_index > len(self.path_real):
+    #         return
+    #     if self.current_waypoint_index==len(self.path_real):
+    #         target_waypoint = self.goal_map
+    #     else:
+    #         # Get the current waypoint
+    #         target_waypoint = self.path_real[self.current_waypoint_index]
+    #     target_x, target_y = target_waypoint
 
+    #     # Get the current position and orientation
+    #     current_x = self.current_position.x
+    #     current_y = self.current_position.y
+    #     current_yaw = self.current_yaw
+
+    #     # Compute the distance and angle to the target waypoint
+    #     distance_to_target = math.sqrt((target_x - current_x)**2 + (target_y - current_y)**2)
+    #     if self.current_waypoint_index==0:
+    #         target_angle = math.atan2(target_y -self.start_map[1],target_x-self.start_map[0])
+    #     else:
+    #         target_angle = math.atan2(target_y -self.path_real[self.current_waypoint_index-1][1],target_x-self.path_real[self.current_waypoint_index-1][0])
+    #     print(f"current pursuit: [{self.current_waypoint_index}] {target_x},{target_y}, {target_angle}")
+
+    #     # target_angle = math.atan2(target_y - current_y, target_x - current_x)
+        
+    #     # Calculate the angle difference
+    #     angle_difference = target_angle - current_yaw
+    #     angle_difference = math.atan2(math.sin(angle_difference), math.cos(angle_difference))  # Normalize to [-pi, pi]
+    #     print(f"angle difference{angle_difference}")
+    #     # Initialize Twist message
+    #     cmd_vel = Twist()
+
+    #     # Define thresholds for proximity and angular alignment
+    #     proximity_threshold = 0.14  # meters
+    #     angular_threshold = 0.4  # radians
+
+    #     # Control logic
+    #     if distance_to_target > proximity_threshold:
+    #         if abs(angle_difference) > angular_threshold:
+    #             # Rotate towards the target
+    #             cmd_vel.linear.x = -0.05
+
+    #             cmd_vel.angular.z = 0.45 * angle_difference  # Proportional control
+    #         else:
+    #             # Move forward if aligned
+    #             cmd_vel.linear.x = 0.12
+    #             cmd_vel.angular.z =0.0
+    #     else:
+    #         # Move to the next waypoint if close enough
+    #         self.current_waypoint_index += 1
+
+    #     # Publish the velocity command
+    #     self.publisher.publish(cmd_vel)
+    #     print(f"Publishing: linear velocity: {cmd_vel.linear.x:.3f}; angular velocity {cmd_vel.angular.z:.3f}")
+    # def follow_path_callback(self): ##with ahead point, dummy
+    #     # Check if the path and pose data are available
+    #     if self.current_position is None or self.current_waypoint_index >= len(self.path_real):
+    #         return
+        
+    #     # Get the current position and orientation
+    #     # current_x = self.current_position.x
+    #     # current_y = self.current_position.y
+    #     # current_yaw = self.current_yaw
+    #     current_x, current_y = self.get_ahead_point()
+    #     current_yaw = self.current_yaw
+        
+    #     _,__, waypoint_index = self.find_closest_path_point(self.get_ahead_point(), self.path_real)
+    #     if waypoint_index>self.current_waypoint_index:
+    #         self.current_waypoint_index=waypoint_index
+    #     target_waypoint = self.path_real[self.current_waypoint_index]
+    #     target_x, target_y = target_waypoint
+
+
+    #     # Compute the distance and angle to the target waypoint
+    #     distance_to_target = math.sqrt((target_x - current_x)**2 + (target_y - current_y)**2)
+    #     if self.current_waypoint_index==0:
+    #         target_angle_path = math.atan2(target_y -self.start_map[1],target_x-self.start_map[0])
+
+    #     else:
+    #         target_angle_path = math.atan2(target_y -self.path_real[self.current_waypoint_index-1][1],target_x-self.path_real[self.current_waypoint_index-1][0])
+    #         target_angle_topath = math.atan2(target_y - current_y, target_x - current_x)
+    #     print(f"current pursuit: [{self.current_waypoint_index}] {target_x:.2f},{target_y:.2f}, {target_angle_topath:.3f}")
+
+    #     # target_angle = math.atan2(target_y - current_y, target_x - current_x)
+        
+    #     # Calculate the angle difference
+    #     angle_difference = target_angle_topath - current_yaw
+    #     angle_difference = math.atan2(math.sin(angle_difference), math.cos(angle_difference))  # Normalize to [-pi, pi]
+    #     print(f"angle difference{angle_difference:.2f}")
+
+    #     print(f"distance to target{distance_to_target:.2f}")
+    #     # Initialize Twist message
+    #     cmd_vel = Twist()
+
+    #     # Define thresholds for proximity and angular alignment
+    #     proximity_threshold = 0.14  # meters
+    #     angular_threshold = 0.4  # radians
+
+    #     # Control logic
+    #     if distance_to_target > proximity_threshold:
+    #         if abs(angle_difference) > angular_threshold:
+    #             # Rotate towards the target
+    #             cmd_vel.linear.x = -0.05
+
+    #             cmd_vel.angular.z = 0.45 * angle_difference  # Proportional control
+    #         else:
+    #             # Move forward if aligned
+    #             cmd_vel.linear.x = 0.15
+    #             cmd_vel.angular.z =0.0
+    #     else:
+    #         if self.current_waypoint_index == len(self.path_real)-1:
+    #             cmd_vel.linear.x = 0.0
+    #             cmd_vel.angular.z =0.0
+
+    #         # Move to the next waypoint if close enough
+    #         self.current_waypoint_index += 1
+    # # Publish the velocity command
+    #     self.publisher.publish(cmd_vel)
+    #     print(f"Publishing: linear velocity: {cmd_vel.linear.x:.3f}; angular velocity {cmd_vel.angular.z:.3f}")
+    
+    def follow_path_callback(self): #with pid and ahead point
+        if self.current_position is None or self.current_waypoint_index >= len(self.path_real):
+            return
+        
         # Get the current position and orientation
         current_x = self.current_position.x
         current_y = self.current_position.y
-        current_yaw = self.current_yaw
-
-        # Compute the distance and angle to the target waypoint
-        distance_to_target = math.sqrt((target_x - current_x)**2 + (target_y - current_y)**2)
-        if self.current_waypoint_index==0:
-            target_angle = math.atan2(target_y -self.start_map[1],target_x-self.start_map[0])
-        else:
-            target_angle = math.atan2(target_y -self.path_real[self.current_waypoint_index-1][1],target_x-self.path_real[self.current_waypoint_index-1][0])
-        print(f"current pursuit: [{self.current_waypoint_index}] {target_x},{target_y}, {target_angle}")
-
-        # target_angle = math.atan2(target_y - current_y, target_x - current_x)
+        # current_yaw = self.current_yaw
+        x, y = self.get_ahead_point()
+        # theta = self.current_yaw
         
-        # Calculate the angle difference
-        angle_difference = target_angle - current_yaw
-        angle_difference = math.atan2(math.sin(angle_difference), math.cos(angle_difference))  # Normalize to [-pi, pi]
-        print(f"angle difference{angle_difference}")
-        # Initialize Twist message
-        cmd_vel = Twist()
+        _,__, waypoint_index = self.find_closest_path_point(self.get_ahead_point(), self.path_real)
+        if waypoint_index>self.current_waypoint_index:
+            self.current_waypoint_index=waypoint_index
+        target_waypoint = self.path_real[self.current_waypoint_index]
+        x_g, y_g = target_waypoint
 
-        # Define thresholds for proximity and angular alignment
-        proximity_threshold = 0.14  # meters
-        angular_threshold = 0.4  # radians
+        if self.current_waypoint_index==len(self.path_real)-1:
+            x=current_x
+            y=current_y
+        gamma =0.5 #linear
+        lamda=0.15 #angular
+        h=0.1 #phi
+        # x = self.current_position.x
+        # y = self.current_position.y
+        theta = self.current_yaw
+        # x_g,y_g = self.path_real[self.current_waypoint_index]
 
-        # Control logic
-        if distance_to_target > proximity_threshold:
-            if abs(angle_difference) > angular_threshold:
-                # Rotate towards the target
-                cmd_vel.linear.x = -0.05
-
-                cmd_vel.angular.z = 0.45 * angle_difference  # Proportional control
-            else:
-                # Move forward if aligned
-                cmd_vel.linear.x = 0.12
-                cmd_vel.angular.z =0.0
+        if self.current_waypoint_index==len(self.path_real)-1:
+            theta_g = math.atan2(y_g-self.path_real[self.current_waypoint_index-1][1],x_g-self.path_real[self.current_waypoint_index-1][0])
         else:
-            # Move to the next waypoint if close enough
-            self.current_waypoint_index += 1
+            theta_g = math.atan2(self.path_real[self.current_waypoint_index+1][1]-y_g,self.path_real[self.current_waypoint_index+1][0]-x_g)
+        
+        # theta_g = math.atan2(self.path_real[self.current_waypoint_index][1]-y_g,self.path_real[self.current_waypoint_index][0]-x_g)
+        deltaX = x_g - x
+        deltaY = y_g - y
+        # if self.current_waypoint_index==0:
+        #     theta_g = math.atan2(y_g-self.start_map[1],x_g-self.start_map[0])
+        # else:
+        #     theta_g = math.atan2(y_g-self.path_real[self.current_waypoint_index-1][1],x_g-self.path_real[self.current_waypoint_index-1][0])
+        
+        print(f"current pursuit: [{self.current_waypoint_index}] {x_g:.2f},{y_g:.2f},{theta_g:.2f}")
 
-        # Publish the velocity command
-        self.publisher.publish(cmd_vel)
-        print(f"Publishing: linear velocity: {cmd_vel.linear.x}; angular velocity {cmd_vel.angular.z}")
-    # def follow_path_callback(self):
+        rho = math.sqrt(pow(deltaX, 2) + pow(deltaY, 2));
+        phi = math.atan2(deltaY, deltaX) - theta_g;
+        alpha = math.atan2(deltaY, deltaX) - theta;
+        v = gamma * math.cos(alpha) * rho;
+        w = lamda * alpha + gamma * math.cos(alpha) * math.sin(alpha) * (alpha + h * phi) / alpha;
+        # vr = v + WHEEL_DISTANCE * w / 2;
+        # vl = v - WHEEL_DISTANCE * w / 2;
+        
+        # Move toward the target
+        twist = Twist()
+        if rho>0.12:
+            twist.angular.z = w
+            twist.linear.x = v
+            print(f"Publishing: rho: {rho:.2f}; v: {v:.2f}; w {w:.2f}")
+
+        else:
+            self.current_waypoint_index += 1
+            if self.current_waypoint_index==len(self.path_real):
+                print("GOAL REACHED!")
+                twist.angular.z = 0.0
+                twist.linear.x = 0.0
+        # Publish commands
+        self.publisher.publish(twist)
+
+    # def follow_path_callback_pid(self):
     #     if self.current_position is None or self.current_waypoint_index > len(self.path_real):
     #         return
     #     gamma =0.5 #linear
@@ -441,12 +599,12 @@ class PathPlanner(Node):
     #     x = self.current_position.x
     #     y = self.current_position.y
     #     theta = self.current_yaw
-    #     if self.current_waypoint_index==len(self.path_grid):
+    #     if self.current_waypoint_index==len(self.path_real):
     #         x_g,y_g= self.goal_map
     #         theta_g = math.atan2(y_g-self.path_real[self.current_waypoint_index-1][1],x_g-self.path_real[self.current_waypoint_index-1][0])
     #     else:
     #         x_g,y_g = self.path_real[self.current_waypoint_index]
-    #         if self.current_waypoint_index==(len(self.path_grid)-1):
+    #         if self.current_waypoint_index==(len(self.path_real)-1):
     #             theta_g = math.atan2(self.goal_map[1]-y_g,self.goal_map[0]-x_g)
     #         else:
     #             theta_g = math.atan2(self.path_real[self.current_waypoint_index+1][1]-y_g,self.path_real[self.current_waypoint_index+1][0]-x_g)

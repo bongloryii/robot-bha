@@ -41,7 +41,8 @@ class LidarICPNode(Node):
             # Apply ICP to calculate the relative transformation
             delta_pose = self.icp(self.prev_scan, points)
             self.pose = self.update_pose(self.pose, delta_pose)
-            self.get_logger().info(f'Updated Pose: {self.pose}')
+            # self.get_logger().info(f'Updated Pose: {self.pose}')
+            self.get_logger().info(f'Updated Pose: [{self.pose[0]:.2f},{self.pose[1]:.2f},{self.pose[2]:.2f}]')
             # Save the pose to the CSV file
             self.csv_writer.writerow(self.pose)
 
