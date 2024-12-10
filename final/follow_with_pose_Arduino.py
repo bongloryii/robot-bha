@@ -6,8 +6,12 @@ import matplotlib.pyplot as plt
 import math
 import numpy as np
 import heapq
+import serial
+import time
 from geometry_msgs.msg import Pose  # Assuming PoseStamped is used
-
+arduino = serial.Serial('COM5', 9600)  # Replace 'COM11' with your Arduino port
+time.sleep(2)  # Wait for Arduino to initialize
+WHEEL_DISTANCE=0.182
 class PathPlanner(Node):
     def __init__(self):
         super().__init__('path_planner')
@@ -368,17 +372,25 @@ class PathPlanner(Node):
         if distance_to_target > proximity_threshold:
             if abs(angle_difference) > angular_threshold:
                 # Rotate towards the target
-                cmd_vel.linear.x = -0.05
+                v = -0.05
+                w=0.45
+                # cmd_vel.linear.x = -0.05
 
-                cmd_vel.angular.z = 0.45 * angle_difference  # Proportional control
+                # cmd_vel.angular.z = 0.45 * angle_difference  # Proportional control
             else:
                 # Move forward if aligned
-                cmd_vel.linear.x = 0.12
-                cmd_vel.angular.z =0.0
+                v=0.12
+                w=0
+                # cmd_vel.linear.x = 0.12
+                # cmd_vel.angular.z =0.0
         else:
             # Move to the next waypoint if close enough
             self.current_waypoint_index += 1
-
+        vr = v + WHEEL_DISTANCE * w / 2;
+        vl = v - WHEEL_DISTANCE * w / 2;
+        
+        arduino.write(f"{vr} {vl}\n".encode())  # Sending velocity for right and left motor
+        arduino.flush() 
         # Publish the velocity command
         self.publisher.publish(cmd_vel)
         print(f"Publishing: linear velocity: {cmd_vel.linear.x}; angular velocity {cmd_vel.angular.z}")
