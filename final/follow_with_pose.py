@@ -30,7 +30,7 @@ class PathPlanner(Node):
         self.current_yaw = None  # To store the yaw angle (optional)
 
         # Grid map metadata
-        self.grid_resolution = 0.35  # Grid resolution in meters
+        self.grid_resolution = 0.2  # Grid resolution in meters
         self.grid_origin = (0.0, 0.0)  # Origin of the grid in map coordinates
 
         # Grid settings
@@ -40,7 +40,7 @@ class PathPlanner(Node):
         self.num_y_cells = int((self.y_max - self.y_min) / self.grid_resolution)
         # Define start and goal positions in map coordinates
         self.start_map = (1, 3)  # Map coordinates (x, y)
-        self.goal_map = (3.1, 1.5)  # Map coordinates (x, y)
+        self.goal_map = (2, 1)  # Map coordinates (x, y)
 
         # Convert map coordinates to grid coordinates
         self.start = self.map_to_grid(self.start_map)
@@ -282,8 +282,12 @@ class PathPlanner(Node):
         # Create a dilated obstacle grid using binary dilation
         # 1 is considered as obstacle and 0 as free space
         dilated_obstacles = binary_dilation(self.grid_map, structure=np.ones((2 * dilation_radius + 1, 2 * dilation_radius + 1)))
+        self.grid_map=dilated_obstacles
         dilated_obstacles = dilated_obstacles.astype(int)
-
+        # plt.figure(figsize=(6,6))
+        # plt.imshow(self.grid_map, cmap='gray_r', origin='lower')
+        # print(self.grid_map)
+        # plt.show()
         # Priority queue (open set) for A* with (f_score, current_position)
         open_set = []
         heapq.heappush(open_set, (0 + heuristic(start, goal), 0, start))
@@ -342,21 +346,35 @@ class PathPlanner(Node):
         plt.scatter(self.all_x_points, self.all_y_points, marker='.', label=f'Data from map')
         # Shade grid cells for obstacles
         for i in range(self.num_x_cells):
+            # for j in range(self.num_y_cells):
+            #     cell_x_min = self.x_min + i * self.grid_resolution
+            #     cell_x_max = cell_x_min + self.grid_resolution
+            #     cell_y_min = self.y_min + j * self.grid_resolution
+            #     cell_y_max = cell_y_min + self.grid_resolution
+
+            #     points_in_cell = ((self.all_x_points >= cell_x_min) & (self.all_x_points < cell_x_max) &
+            #                     (self.all_y_points >= cell_y_min) & (self.all_y_points < cell_y_max))
+
+            #     if np.any(points_in_cell):
+            #         self.grid_map[j, i] = True
+            #         plt.gca().add_patch(
+            #             plt.Rectangle((cell_x_min, cell_y_min), self.grid_resolution, self.grid_resolution,
+            #                         color='black', alpha=0.5)
+            #         )
             for j in range(self.num_y_cells):
-                cell_x_min = self.x_min + i * self.grid_resolution
-                cell_x_max = cell_x_min + self.grid_resolution
-                cell_y_min = self.y_min + j * self.grid_resolution
-                cell_y_max = cell_y_min + self.grid_resolution
-
-                points_in_cell = ((self.all_x_points >= cell_x_min) & (self.all_x_points < cell_x_max) &
-                                (self.all_y_points >= cell_y_min) & (self.all_y_points < cell_y_max))
-
-                if np.any(points_in_cell):
-                    self.grid_map[j, i] = True
+                if self.grid_map[j, i]:  # Check if the cell is occupied
+                    cell_x_min = self.x_min + i * self.grid_resolution
+                    cell_y_min = self.y_min + j * self.grid_resolution
+                    
                     plt.gca().add_patch(
-                        plt.Rectangle((cell_x_min, cell_y_min), self.grid_resolution, self.grid_resolution,
-                                    color='black', alpha=0.5)
+                    plt.Rectangle(
+                        (cell_x_min, cell_y_min),
+                        self.grid_resolution,
+                        self.grid_resolution,
+                        color="black",
+                        alpha=0.5,
                     )
+                )
         # plt.imshow(self.grid_map, origin='lower', cmap='gray_r')
         path_x = [self.start_map[0]] + [self.x_min + p[0] * self.grid_resolution + self.grid_resolution / 2 for p in self.path_grid] + [self.goal_map[0]]
         path_y = [self.start_map[1]] + [self.y_min + p[1] * self.grid_resolution + self.grid_resolution / 2 for p in self.path_grid] + [self.goal_map[1]]
