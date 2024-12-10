@@ -7,6 +7,7 @@ import math
 import numpy as np
 import heapq
 from geometry_msgs.msg import Pose  # Assuming PoseStamped is used
+from scipy.ndimage import zoom
 
 class PathPlanner(Node):
     def __init__(self):
@@ -48,6 +49,7 @@ class PathPlanner(Node):
 
         # Load map data and create a grid
         self.grid_map = self.load_and_preprocess_map('Sim_WorldFinalV3.csv')
+        self.scale_and_save_grid_map()
 
         # Generate path using A*
         self.path_grid = self.generate_path(self.start, self.goal)
@@ -91,6 +93,54 @@ class PathPlanner(Node):
     #         self.get_logger().info(f"Using stored yaw: {yaw}")
     #     else:
     #         self.get_logger().warn("Pose data is not available yet.")
+    def get_ahead_point(self,ahead_distance=0.15):
+       
+        x_ap = self.pose[0]*(1+np.cos(self.pose[2])*ahead_distance)
+        y_ap = self.pose[1]*(1+np.sin(self.pose[2])*ahead_distance)
+        return np.array([x_ap, y_ap])
+
+    def find_closest_path_point(self,ahead_point, path):
+        """
+        Finds the closest point on the path to the ahead_point in terms of lateral distance.
+        Prioritizes points with a higher index in case of equal distances.
+
+        :param ahead_point: A tuple (x, y) representing the ahead point.
+        :param path: A list of tuples [(x1, y1), (x2, y2), ...] representing the path.
+        :return: A tuple (closest_point, closest_distance, closest_index) where:
+                - closest_point is the closest point on the path.
+                - closest_distance is the lateral distance to that point.
+                - closest_index is the index of the point on the path.
+        """
+        ahead_x, ahead_y = ahead_point
+        closest_point = None
+        closest_distance = float('inf')
+        closest_index = -1
+
+        for i in range(len(path) - 1):
+            # Get the endpoints of the current segment
+            x1, y1 = path[i]
+            x2, y2 = path[i + 1]
+
+            # Calculate the projection of ahead_point onto the line segment
+            dx, dy = x2 - x1, y2 - y1
+            if dx == 0 and dy == 0:
+                # Handle degenerate case: segment is a single point
+                distance = np.sqrt((ahead_x - x1) ** 2 + (ahead_y - y1) ** 2)
+                point_on_segment = (x1, y1)
+            else:
+                # Parameterize the line segment
+                t = max(0, min(1, ((ahead_x - x1) * dx + (ahead_y - y1) * dy) / (dx ** 2 + dy ** 2)))
+                point_on_segment = (x1 + t * dx, y1 + t * dy)
+                distance = np.sqrt((ahead_x - point_on_segment[0]) ** 2 + (ahead_y - point_on_segment[1]) ** 2)
+
+            # Update the closest point and distance if necessary
+            if distance < closest_distance or (distance == closest_distance and i + 1 > closest_index):
+                closest_distance = distance
+                closest_point = point_on_segment
+                closest_index = i + 1
+
+        return closest_point, closest_distance, closest_index
+
     def map_to_grid(self, map_coords):
         """Convert map coordinates to grid coordinates."""
         map_x, map_y = map_coords
@@ -119,27 +169,7 @@ class PathPlanner(Node):
         return np.array([roll, pitch, yaw])
 
     def load_and_preprocess_map(self, file_path):
-        # # Load lidar data
-        # with open(file_path, mode='r') as csv_file:
-        #     reader = csv.DictReader(csv_file)
-        #     lidar_points = [(float(row['x']), float(row['y'])) for row in reader]
-
-        # # Set grid size
-        # grid_size = 10  # Grid will be 20x20 cells
-
-        # # Create an empty grid map
-        # grid_map = np.zeros((grid_size, grid_size), dtype=np.uint8)
-
-        # # Populate the grid map with obstacles
-        # for x, y in lidar_points:
-        #     grid_x, grid_y = self.map_to_grid((x, y))
-        #     if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
-        #         grid_map[grid_x, grid_y] = 1  # Mark as obstacle
-
-        # # Inflate obstacles to account for robot size
-        # robot_radius = 0.5  # Robot radius in meters
-        # inflation_cells = int(robot_radius / self.grid_resolution)
-        # grid_map = binary_dilation(grid_map, iterations=inflation_cells).astype(np.uint8)
+        
         x_values = []
         y_values = []
 
@@ -256,6 +286,7 @@ class PathPlanner(Node):
                     path.append(current)
                     current = came_from[current]
                 path.append(start)
+                np.save("path.npy", path[::-1])
                 # return path[::-1], g_score_values, heuristic_values, all_visited_nodes  # Return path, g_score, heuristic, visited nodes
                 return path[::-1] # Return path, g_score, heuristic, visited nodes
             
@@ -327,6 +358,25 @@ class PathPlanner(Node):
         # Adjust ticks: multiply by grid_resolution for real-world coordinates
         plt.show()
 
+    def scale_and_save_grid_map(self, output_file="grid_map.npy"):
+        # Original grid dimensions
+        grid_height, grid_width = self.grid_map.shape
+        
+        # Destination coordinate bounds
+
+        x_range = self.x_max - self.x_min
+        y_range = self.y_max - self.y_min
+        
+        # Compute scaling factors based on the destination size
+        x_scale = x_range / grid_width
+        y_scale = y_range / grid_height
+        
+        # Rescale the grid map
+        scaled_grid_map = zoom(self.grid_map, (y_scale, x_scale), order=1)
+        
+        # Save scaled grid map to .npy
+        np.save(output_file, scaled_grid_map)
+        print(f"Scaled grid map saved to {output_file}")
     def follow_path_callback(self):
         # Check if the path and pose data are available
         if self.current_position is None or self.current_waypoint_index > len(self.path_real):
