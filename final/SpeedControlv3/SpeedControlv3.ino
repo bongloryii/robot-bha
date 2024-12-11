@@ -25,7 +25,7 @@ int inL2 = 9;
 int enR = 13;
 int inR1 = 10;
 int inR2 = 11;
-bool isDebug = true;
+
 // Encoder chân A
 int enLA = 2; // Encoder trái
 int enRA = 3; // Encoder phải
@@ -35,7 +35,7 @@ volatile int counterLA = 0;
 volatile int counterRA = 0; 
 
 float vR, vL;
-float vR_sign, vL_sign;
+
 // PID constants
 float Kp = 200;
 float Ki = 500;
@@ -94,17 +94,17 @@ void loop() {
         set_vL = data.substring(separatorIndex + 1).toFloat();
       }
     }
-    //  return; // Kết thúc loop sớm
-  } else {
-    // Không có tín hiệu Serial, thực hiện xoay tại chỗ
-    rotateAtPlace();
-  }
+  //   //  return; // Kết thúc loop sớm
+  // } else {
+  //   // Không có tín hiệu Serial, thực hiện xoay tại chỗ
+  //   rotateAtPlace();
+  // }
 
   // ĐOẠN NÀY CODE TEST DISTANCE SENSOR ĐỂ GẮP LON
   float distance = distanceSensor.measureDistanceCm();
     Serial.println(distance);
 
-  if (distance > 1 && distance < 10) {
+  if (distance > 1 && distance < 5) {
     // Serial.print("true");
     set_vR = 0;
     set_vL = 0;
@@ -119,6 +119,7 @@ void loop() {
 
     return false;
   }
+}
 }
 
 void rotateAtPlace() {
@@ -140,7 +141,7 @@ bool bottleDetect() {
     set_vR = 0;
     set_vL = 0;
     delay(1000);
-    servo.write(30);
+    servo.write(10);
 
     return true;
   } else {
@@ -150,26 +151,7 @@ bool bottleDetect() {
     return false;
   }
 }
-void processCommand(String command) {
-  command.trim(); // Remove whitespace
-  char state = command.charAt(0);
 
-  if (state == '1' || state == '3') {
-    // Parse velocities: format "STATE,vr,vl"
-    int firstComma = command.indexOf(',');
-    int secondComma = command.lastIndexOf(',');
-
-    set_vR = command.substring(firstComma + 1, secondComma).toFloat();
-    set_vL = command.substring(secondComma + 1).toFloat();
-
-    // Set motor speeds based on vr and vl
-    set(vr, vl);
-
-  } else if (state == '2') {
-    // Stop command
-    stop();
-  }
-}
 
 void VelCtrlTimer() {
   // Tính vận tốc bánh xe
@@ -204,8 +186,6 @@ void VelCtrlTimer() {
     controlOutputR = 0;
   }
 
-  Serial.print("enR:");Serial.print(controlOutputR);  Serial.print("; enL:");Serial.print(controlOutputL);
-
   // Cập nhật tốc độ motor
   setMotorSpeedR((int)controlOutputR);
   setMotorSpeedL((int)controlOutputL);
@@ -218,13 +198,13 @@ void setMotorSpeedL(int speed) {
   }
 
   if (speed > 0) {
-    digitalWrite(inL1, HIGH);
-    digitalWrite(inL2, LOW);
+    digitalWrite(inL1, LOW);
+    digitalWrite(inL2, HIGH);
   }
   
   if (speed < 0) {
-    digitalWrite(inL1, LOW);
-    digitalWrite(inL2, HIGH);
+    digitalWrite(inL1, HIGH);
+    digitalWrite(inL2, LOW);
   }
   
   speed = abs(speed);
@@ -245,13 +225,13 @@ void setMotorSpeedR(int speed) {
   }
 
   if (speed > 0) {
-    digitalWrite(inR1, HIGH);
-    digitalWrite(inR2, LOW);
+    digitalWrite(inR1, LOW);
+    digitalWrite(inR2, HIGH);
   }
   
   if (speed < 0) {
-    digitalWrite(inR1, LOW);
-    digitalWrite(inR2, HIGH);
+    digitalWrite(inR1, HIGH);
+    digitalWrite(inR2, LOW);
   }
   
   speed = abs(speed);
@@ -269,8 +249,10 @@ void stop() {
   digitalWrite(inR1, LOW);
   digitalWrite(inR2, LOW); 
   digitalWrite(inL1, LOW);
-  digitalWrite(inL2, LOW);
-  // delay(5000);
+  digitalWrite(inL2, LOW); 
+  analogWrite(enR, 150);
+  analogWrite(enL, 150);
+  delay(5000);
 }
 
 

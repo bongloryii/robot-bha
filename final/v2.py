@@ -4,7 +4,7 @@ import serial
 import time
 
 # Set up serial communication with Arduino
-# arduino = serial.Serial('COM5', 9600)  # Replace 'COM11' with your Arduino port
+# arduino = serial.Serial('/dev/ttyUSB1', 9600)  # Replace 'COM11' with your Arduino port
 time.sleep(2)  # Wait for Arduino to initialize
 
 # Color range for green in HSV
@@ -12,8 +12,11 @@ lower = np.array([36, 50, 50])
 upper = np.array([70, 255, 255])
 
 # Capture video from webcam
-webcam_video = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+webcam_video = cv2.VideoCapture(1,cv2.CAP_DSHOW)
 
+if not webcam_video.isOpened():
+    print("Error: Could not open webcam.")
+    exit()
 
 # # Example usage of initial velocities
 # vl = 0.02
@@ -73,10 +76,10 @@ while True:
 
             # Control the velocity based on the error
                 # Example strategy: adjust velocities based on the error
-            if error > 30:  # Object is to the right of the center
+            if error >100:  # Object is to the right of the center
                 vl = 0.05
                 vr = 0.08
-            elif error < -30:  # Object is to the left of the center
+            elif error <-100:  # Object is to the left of the center
                 vl = 0.08
                 vr = 0.05
             else:  # Object is close to the center
@@ -84,25 +87,21 @@ while True:
                 vr = 0.05
             # Send the velocities to Arduino
             print(f"vl: {vl}, vr: {vr}")
-            # Function to send velocity to Arduino
-            #"""Send the left and right wheel velocities to Arduino"""
-            # message = f"{vl} {vr}\n"  # Format as 'vl vr' followed by newline
-            # arduino.write(f"{vr} {vl}\n".encode())  # Sending velocity for right and left motor
-            # arduino.flush() 
-
-
-            # # Send speed values to Arduino
-            # print(f"Sent to Arduino: Right Speed = {right_speed}, Left Speed = {left_speed}")
-            # arduino.write(f"{right_speed},{left_speed}\n".encode())  # Sending velocity for right and left motor
+            # arduino.write(f"1,{vr},{vl}\n".encode())  # Sending velocity for right and left motor
             # arduino.flush() 
 
             # Display the error on the video feed
-            cv2.putText(video, f"Error: {error}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+            cv2.putText(mask, f"Error: {error}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
             # Show object center and error for debugging
             print(f"Object Center: x={cx}, y={cy}, Error: {error}")
             # print(f"Right Speed: {right_speed}, Left Speed: {left_speed}")  # Print right_speed and left_speed
-    
+    else:  # No object detected
+        vl = 0.05  # Set velocities for rotation
+        vr = -0.05
+        print("No object found. Rotating...")
+        # arduino.write(f"1,{vr},{vl}\n".encode())  # Sending velocity for right and left motor
+        # arduino.flush()
     # Display the frames
     cv2.imshow("Mask Image", mask)
     cv2.imshow("Webcam Video", video)

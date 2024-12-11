@@ -1,0 +1,20 @@
+source install/setup.bash
+ros2 launch my_bot launch_sim.launch.py world:=/home/hoa/ros2_ws/src/my_bot/worlds/landmarks2.world
+colcon build --symlink-install
+python3 src/my_bot/src/obsAvoidance.py
+ros2 run obstacle avoid
+python3 src/my_bot/src/trilaterationSIM.py
+source /opt/ros/foxy/setup.bash
+ros2 launch ldlidar_stl_ros2 viewer_ld19.launch.py
+ls /dev/ttyUSB*
+sudo chmod 777 /dev/ttyUSB0
+sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup
+sudo apt install ros-foxy-turtlebot3*
+
+ros2 launch rplidar_ros view_rplidar_c1_launch.py
+ros2 bag play data3_nov21 --loop
+ros2 bag play mydata1 --loop
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+ros2 topic echo /robot_pose
+ros2 launch my_bot launch_sim.launch.py world:=/home/hoa/ros2_ws/src/my_bot/worlds/worldfinalV3.world 
+

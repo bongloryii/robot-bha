@@ -3,9 +3,35 @@ import numpy as np
 import serial
 import time
 
-# Set up serial communication with Arduino
-# arduino = serial.Serial('COM5', 9600)  # Replace 'COM11' with your Arduino port
-time.sleep(2)  # Wait for Arduino to initialize
+# PID Controller Class
+class PIDController:
+    def __init__(self, kp, ki, kd, dt):
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.dt = dt
+
+        self.prev_error = 0
+        self.integral = 0
+
+    def compute(self, error):
+        # Proportional term
+        proportional = self.kp * error
+
+        # Integral term
+        self.integral += error * self.dt
+        integral = self.ki * self.integral
+
+        # Derivative term
+        derivative = self.kd * (error - self.prev_error) / self.dt
+        self.prev_error = error
+
+        # PID Output
+        return proportional + integral + derivative
+
+# Initialize serial communication with Arduino
+# arduino = serial.Serial('/dev/ttyUSB1', 9600)  # Replace with your Arduino port
+# time.sleep(2)  # Wait for Arduino to initialize
 
 # Color range for green in HSV
 lower = np.array([36, 50, 50])
@@ -14,20 +40,26 @@ upper = np.array([70, 255, 255])
 # Capture video from webcam
 webcam_video = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
+if not webcam_video.isOpened():
+    print("Error: Could not open webcam.")
+    exit()
 
-# # Example usage of initial velocities
-# vl = 0.02
-# vr = 0.02
+# PID Controller Parameters
+kp = 0.01
+ki = 0.001
+kd = 0.002
+dt = 0.1  # Time step (seconds)
+
+# Initialize PID Controller
+pid = PIDController(kp, ki, kd, dt)
 
 while True:
     success, video = webcam_video.read()  # Read frame from webcam
     if not success:
         break
-    
+
     # Get the frame dimensions
     frame_height, frame_width, _ = video.shape
-
-    # Calculate the horizontal center of the frame
     frame_center_x = frame_width // 2
 
     # Draw a fixed vertical line at the center of the frame (for visual reference)
@@ -41,7 +73,7 @@ while True:
 
     # Clean up the mask with morphological operations
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)  # Closing operation to merge nearby areas
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
     # Find contours in the mask
     mask_contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -61,48 +93,38 @@ while True:
             cx = x + w // 2
             cy = y + h // 2
 
-            #Draw a circle at the center of the object
+            # Draw a circle at the center of the object
             cv2.circle(video, (cx, cy), 5, (255, 0, 0), -1)  # Blue dot for object center
 
             # Calculate the error (distance from the center of the frame)
             error = frame_center_x - cx
 
-            # # Calculate the speed adjustment based on error
-            # base_speed = 0.2  # Base speed for both motors
-            # speed_adjustment = 0.05  # Speed adjustment for turning
+            # Compute PID output
+            pid_output = pid.compute(error)
 
-            # Control the velocity based on the error
-                # Example strategy: adjust velocities based on the error
-            if error > 30:  # Object is to the right of the center
-                vl = 0.05
-                vr = 0.08
-            elif error < -30:  # Object is to the left of the center
-                vl = 0.08
-                vr = 0.05
-            else:  # Object is close to the center
-                vl = 0.05
-                vr = 0.05
+            # Adjust motor velocities based on PID output
+            base_speed = 0.05  # Base speed for both motors
+            turn_speed = abs(pid_output) * 0.01  # Scale PID output to appropriate speed adjustment
+            print(turn_speed)
+            if pid_output < 0:  # Object is to the right of the center
+                vl = base_speed - turn_speed
+                vr = base_speed + turn_speed
+            else:  # Object is to the left of the center
+                vl = base_speed + turn_speed
+                vr = base_speed - turn_speed
+
             # Send the velocities to Arduino
             print(f"vl: {vl}, vr: {vr}")
-            # Function to send velocity to Arduino
-            #"""Send the left and right wheel velocities to Arduino"""
-            # message = f"{vl} {vr}\n"  # Format as 'vl vr' followed by newline
-            # arduino.write(f"{vr} {vl}\n".encode())  # Sending velocity for right and left motor
-            # arduino.flush() 
-
-
-            # # Send speed values to Arduino
-            # print(f"Sent to Arduino: Right Speed = {right_speed}, Left Speed = {left_speed}")
-            # arduino.write(f"{right_speed},{left_speed}\n".encode())  # Sending velocity for right and left motor
-            # arduino.flush() 
+            # message = f"{vl} {vr}\n"
+            # arduino.write(message.encode())
+            # arduino.flush()
 
             # Display the error on the video feed
             cv2.putText(video, f"Error: {error}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
             # Show object center and error for debugging
             print(f"Object Center: x={cx}, y={cy}, Error: {error}")
-            # print(f"Right Speed: {right_speed}, Left Speed: {left_speed}")  # Print right_speed and left_speed
-    
+
     # Display the frames
     cv2.imshow("Mask Image", mask)
     cv2.imshow("Webcam Video", video)
