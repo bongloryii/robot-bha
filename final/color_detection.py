@@ -4,7 +4,7 @@ import serial
 import time
 
 # Set up serial communication with Arduino
-# arduino = serial.Serial('COM5', 9600)  # Replace 'COM11' with your Arduino port
+arduino = serial.Serial('COM5', 9600)  # Replace 'COM11' with your Arduino port
 time.sleep(2)  # Wait for Arduino to initialize
 
 # Color range for green in HSV
@@ -12,7 +12,7 @@ lower = np.array([36, 50, 50])
 upper = np.array([70, 255, 255])
 
 # Capture video from webcam
-webcam_video = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+webcam_video = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
 
 # # Example usage of initial velocities
@@ -87,7 +87,7 @@ while True:
             # Function to send velocity to Arduino
             #"""Send the left and right wheel velocities to Arduino"""
             # message = f"{vl} {vr}\n"  # Format as 'vl vr' followed by newline
-            # arduino.write(f"{vr} {vl}\n".encode())  # Sending velocity for right and left motor
+            arduino.write(f"1,{vr},{vl}\n".encode())  # Sending velocity for right and left motor
             # arduino.flush() 
 
 

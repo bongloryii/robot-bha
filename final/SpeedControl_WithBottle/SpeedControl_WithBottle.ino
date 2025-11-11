@@ -37,10 +37,16 @@ volatile int counterRA = 0;
 float vR, vL;
 int vR_sign, vL_sign;
 // PID constants
-float Kp = 200;
-float Ki = 500;
-float Kd = 100;
-float set_vL = 0, set_vR = 0;
+// PID constants
+float KpL = 300;
+float KiL = 800;
+float KdL = 100;
+
+float KpR = 200;  // Proportional gain
+float KiR = 600;  // Integral gain
+float KdR = 100;  // Derivative gain
+
+float set_vL = 0.0, set_vR = 0.0;
 float err_vL = 0, err_vR = 0, pre_err_vL = 0, pre_err_vR = 0;
 float integralL = 0, integralR = 0, derivativeR = 0, derivativeL = 0;
 float controlOutputL = 0, controlOutputR = 0;
@@ -54,7 +60,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(enLA), countEnLA, RISING);
   attachInterrupt(digitalPinToInterrupt(enRA), countEnRA, RISING);
 
-  servo.attach(6);
+  servo.attach(5);
   servo.write(0);
 
   // Khởi tạo chân encoder
@@ -74,26 +80,32 @@ void setup() {
   digitalWrite(inL2, LOW);
 
   // Khởi tạo Timer1 để gọi hàm VelCtrlTimer mỗi samplingTime
-  Timer1.initialize(200000 * samplingTime); 
+  Timer1.initialize(1000000 * samplingTime); 
   Timer1.attachInterrupt(VelCtrlTimer); 
   stop();
+  servo.write(0);
 
 }
 
 
 void loop() {
-  void loop() {
   if (Serial.available() > 0) {
     processCommand();
   }
-
+  
   if (currentState == 1) { // Searching for bottle
     float distance = distanceSensor.measureDistanceCm();
-    if (distance > 0 && distance < 10) { // Example threshold
-      Serial.println("BOTTLE_FOUND");
-      delay(1000);
-      servo.write(30);
+    Serial.println(distance);
+    if (distance > 0 && distance < 5) { // Example threshold
+      Serial.println("!");
+      // stop();
+      // delay(1000);
+      servo.write(90);
+      // delay(1000);
       currentState = 2;
+
+      stop();
+      delay(1000);
     }
   } else if (currentState == 2) { // Bottle found
     stop();
@@ -104,25 +116,50 @@ void loop() {
   }
 }
 
-} 
 
+
+// void processCommand() {
+
+//   String data = Serial.readStringUntil('\n');
+//   data.trim();
+//   int separatorIndex = data.indexOf(' ');
+
+//   if (separatorIndex != -1) {
+//     set_vR = data.substring(0, separatorIndex).toFloat();
+//     set_vL = data.substring(separatorIndex + 1).toFloat();
+//   }
+// }
 void processCommand() {
+    String command = Serial.readStringUntil('\n');
+// Serial.print(command);
+  command.trim(); // Remove whitespace
+  char state = command.charAt(0);
 
-  String data = Serial.readStringUntil('\n');
-  data.trim();
-  int separatorIndex = data.indexOf(' ');
+  if (state == '1' || state == '3') {
+    // Parse velocities: format "STATE,vr,vl"
+    int firstComma = command.indexOf(',');
+    int secondComma = command.lastIndexOf(',');
 
-  if (separatorIndex != -1) {
-    set_vR = data.substring(0, separatorIndex).toFloat();
-    set_vL = data.substring(separatorIndex + 1).toFloat();
+    set_vR = command.substring(firstComma + 1, secondComma).toFloat();
+    set_vL = command.substring(secondComma + 1).toFloat();
+
+  } else if (state == '2') {
+    // Stop command
+    stop();
   }
+  
 }
 
 void VelCtrlTimer() {
+  
   // Tính vận tốc bánh xe
-  vR = (float(counterRA) * M_PER_REV+0) / (samplingTime * ENCODER_RESOLUTION);
-  vL = (float(counterLA) * M_PER_REV+0) / (samplingTime * ENCODER_RESOLUTION);
+  vR = (float (counterRA) * M_PER_REV+0) / (samplingTime * ENCODER_RESOLUTION);
+  vL = (float (counterLA) * M_PER_REV+0) / (samplingTime * ENCODER_RESOLUTION);
 
+  // Serial.print("vL: ");
+  // Serial.print(counterLA);
+  // Serial.print("vR: ");
+  // Serial.println(counterRA);
   // Reset bộ đếm encoder
   counterRA = 0;
   counterLA = 0;
@@ -131,17 +168,16 @@ void VelCtrlTimer() {
   err_vL = set_vL - vL;
   integralL += err_vL * samplingTime;
   derivativeL = (err_vL - pre_err_vL) / samplingTime;
-  controlOutputL = Kp * err_vL + Ki * integralL + Kd * derivativeL;
+  controlOutputL = KpL * err_vL + KiL * integralL + KdL * derivativeL;
   pre_err_vL = err_vL;
 
   // PID cho bánh phải
   err_vR = set_vR - vR;
   integralR += err_vR * samplingTime;
   derivativeR = (err_vR - pre_err_vR) / samplingTime;
-  controlOutputR = Kp * err_vR + Ki * integralR + Kd * derivativeR;
+  controlOutputR = KpR * err_vR + KiR * integralR + KdR * derivativeR;
   pre_err_vR = err_vR;
 
-  
   // Set the speed = 0 if the set value = 0
   if (set_vL == 0) {
     controlOutputL = 0;
@@ -150,11 +186,23 @@ void VelCtrlTimer() {
   if (set_vR == 0) {
     controlOutputR = 0;
   }
-
   if (isDebug)
-  {Serial.print("enR:");Serial.print(controlOutputR);  Serial.print("; enL:");Serial.println(controlOutputL);
-  Serial.print("set_vR:");Serial.print(set_vR);  Serial.print("; set_vL:");Serial.println(set_vL);
+  {
+  //   Serial.print("Set vL: ");
+  // Serial.print(set_vL);
+  // Serial.print("Set vR: ");
+  // Serial.println(set_vR);
+
+  // Print actual velocities
+
+  // // Print control outputs
+  // Serial.print("Control Output L: ");
+  // Serial.print(controlOutputL);
+  // Serial.print("Control Output R: ");
+  // Serial.println(controlOutputR);
   }
+
+  // delay(100);
   // Cập nhật tốc độ motor
   setMotorSpeedR((int)controlOutputR);
   setMotorSpeedL((int)controlOutputL);

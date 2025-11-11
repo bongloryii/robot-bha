@@ -73,7 +73,7 @@ void setup() {
   digitalWrite(inL2, LOW);
 
   // Khởi tạo Timer1 để gọi hàm VelCtrlTimer mỗi samplingTime
-  Timer1.initialize(200000 * samplingTime); 
+  Timer1.initialize(1000000 * samplingTime); 
   Timer1.attachInterrupt(VelCtrlTimer); 
   stop();
 
@@ -115,7 +115,7 @@ void VelCtrlTimer() {
   // Tính vận tốc bánh xe
   vR = (float(counterRA) * M_PER_REV+0) / (samplingTime * ENCODER_RESOLUTION);
   vL = (float(counterLA) * M_PER_REV+0) / (samplingTime * ENCODER_RESOLUTION);
-
+  
   // Reset bộ đếm encoder
   counterRA = 0;
   counterLA = 0;

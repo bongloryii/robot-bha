@@ -76,10 +76,10 @@ while True:
 
             # Control the velocity based on the error
                 # Example strategy: adjust velocities based on the error
-            if error >100:  # Object is to the right of the center
+            if error >100:  # Object is to the left of the center
                 vl = 0.05
                 vr = 0.08
-            elif error <-100:  # Object is to the left of the center
+            elif error <-100:  # Object is to the right of the center
                 vl = 0.08
                 vr = 0.05
             else:  # Object is close to the center

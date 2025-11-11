@@ -37,10 +37,15 @@ volatile int counterRA = 0;
 float vR, vL;
 
 // PID constants
-float Kp = 200;
-float Ki = 500;
-float Kd = 100;
-float set_vL = 0.5, set_vR = 0;
+float KpL = 300;
+float KiL = 00;
+float KdL = 00;
+
+float KpR = 200;  // Proportional gain
+float KiR = 00;  // Integral gain
+float KdR = 00;  // Derivative gain
+
+float set_vL = 0, set_vR = 0;
 float err_vL = 0, err_vR = 0, pre_err_vL = 0, pre_err_vR = 0;
 float integralL = 0, integralR = 0, derivativeR = 0, derivativeL = 0;
 float controlOutputL = 0, controlOutputR = 0;
@@ -76,15 +81,13 @@ void setup() {
   // Khởi tạo Timer1 để gọi hàm VelCtrlTimer mỗi samplingTime
   Timer1.initialize(1000000 * samplingTime); 
   Timer1.attachInterrupt(VelCtrlTimer); 
-
- ;
+ 
 }
 
 void loop() {
   // ĐOẠN NÀY LÀ CODE GỐC CỦA NGUYÊN CÁI MECHANISM XE CHẠY
   if (Serial.available() > 0) {
     if(!bottleDetect()){
-      stop();
       String data = Serial.readStringUntil('\n');
       data.trim();
       int separatorIndex = data.indexOf(' ');
@@ -94,49 +97,15 @@ void loop() {
         set_vL = data.substring(separatorIndex + 1).toFloat();
       }
     }
-  //   //  return; // Kết thúc loop sớm
-  // } else {
-  //   // Không có tín hiệu Serial, thực hiện xoay tại chỗ
-  //   rotateAtPlace();
-  // }
-
-  // ĐOẠN NÀY CODE TEST DISTANCE SENSOR ĐỂ GẮP LON
-  float distance = distanceSensor.measureDistanceCm();
-    Serial.println(distance);
-
-  if (distance > 1 && distance < 5) {
-    // Serial.print("true");
-    set_vR = 0;
-    set_vL = 0;
-    delay(1000);
-    servo.write(30);
-    Serial.print("true");
-
-    return true;
-  } else {
-    servo.write(0);    
-    // Serial.print("false");
-
-    return false;
-  }
 }
 }
 
-void rotateAtPlace() {
-  // Xoay tại chỗ bằng cách quay một bánh xe về phía trước, một bánh xe ngược lại
-  digitalWrite(inL1, HIGH);
-  digitalWrite(inL2, LOW);
-  digitalWrite(inR1, LOW);
-  digitalWrite(inR2, HIGH);
-  analogWrite(enR, 100);
-  analogWrite(enL, 100);
-}
 
 bool bottleDetect() {
   float distance = distanceSensor.measureDistanceCm();
-    Serial.println(distance);
+  // Serial.println(distance);
 
-  if (distance > 1 && distance < 10) {
+  if (distance > 1 && distance < 5) {
     // Serial.print("true");
     set_vR = 0;
     set_vL = 0;
@@ -166,14 +135,14 @@ void VelCtrlTimer() {
   err_vL = set_vL - vL;
   integralL += err_vL * samplingTime;
   derivativeL = (err_vL - pre_err_vL) / samplingTime;
-  controlOutputL = Kp * err_vL + Ki * integralL + Kd * derivativeL;
+  controlOutputL = KpL * err_vL + KiL * integralL + KdL * derivativeL;
   pre_err_vL = err_vL;
 
   // PID cho bánh phải
   err_vR = set_vR - vR;
   integralR += err_vR * samplingTime;
   derivativeR = (err_vR - pre_err_vR) / samplingTime;
-  controlOutputR = Kp * err_vR + Ki * integralR + Kd * derivativeR;
+  controlOutputR = KpR * err_vR + KiR * integralR + KdR * derivativeR;
   pre_err_vR = err_vR;
 
   
@@ -185,7 +154,8 @@ void VelCtrlTimer() {
   if (set_vR == 0) {
     controlOutputR = 0;
   }
-
+  // Serial.print(controlOutputL);
+  // delay(100);
   // Cập nhật tốc độ motor
   setMotorSpeedR((int)controlOutputR);
   setMotorSpeedL((int)controlOutputL);
@@ -198,13 +168,13 @@ void setMotorSpeedL(int speed) {
   }
 
   if (speed > 0) {
-    digitalWrite(inL1, LOW);
     digitalWrite(inL2, HIGH);
+    digitalWrite(inL1, LOW);
   }
   
   if (speed < 0) {
-    digitalWrite(inL1, HIGH);
     digitalWrite(inL2, LOW);
+    digitalWrite(inL1, HIGH);
   }
   
   speed = abs(speed);
@@ -225,13 +195,13 @@ void setMotorSpeedR(int speed) {
   }
 
   if (speed > 0) {
-    digitalWrite(inR1, LOW);
     digitalWrite(inR2, HIGH);
+    digitalWrite(inR1, LOW);
   }
   
   if (speed < 0) {
-    digitalWrite(inR1, HIGH);
     digitalWrite(inR2, LOW);
+    digitalWrite(inR1, HIGH);
   }
   
   speed = abs(speed);
@@ -245,15 +215,7 @@ void setMotorSpeedR(int speed) {
   analogWrite(enR, speed);
 }
 
-void stop() {
-  digitalWrite(inR1, LOW);
-  digitalWrite(inR2, LOW); 
-  digitalWrite(inL1, LOW);
-  digitalWrite(inL2, LOW); 
-  analogWrite(enR, 150);
-  analogWrite(enL, 150);
-  delay(5000);
-}
+
 
 
 void countEnLA() {
